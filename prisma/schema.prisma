@@ -1,8 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -49,9 +47,13 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts Account[]
-  sessions Session[]
-  ideas    Idea[]
+  accounts      Account[]
+  sessions      Session[]
+  ideas         Idea[]
+  notes         Note[]
+  tasks         WorkspaceTask[]
+  datasets      UserDataset[]
+  notifications Notification[]
 }
 
 model VerificationToken {
@@ -63,13 +65,13 @@ model VerificationToken {
 }
 
 model Idea {
-  id            String   @id @default(cuid())
-  title         String
-  description   String   @db.Text
+  id             String   @id @default(cuid())
+  title          String
+  description    String   @db.Text
   targetAudience String
-  industry      String
-  status        String   @default("DRAFT") // DRAFT, ANALYZING, VALIDATED, REJECTED
-  
+  industry       String
+  status         String   @default("DRAFT") // DRAFT, ANALYZING, VALIDATED, REJECTED
+
   // Validation Metrics from API
   feasibilityScore Float?
   marketDemand     Float?
@@ -77,9 +79,84 @@ model Idea {
   innovationScore  Float?
   overallViability Float?
 
+  // Scores from similarity/sentiment analysis pipeline
+  noveltyScore     Float?
+  marketPainScore  Float?
+  opportunityScore Float?
+
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  notes Note[]
+  tasks WorkspaceTask[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  title     String
+  content   String   @db.Text
+  category  String   @default("General")
+  tone      String   @default("orange")
+  isPinned  Boolean  @default(false)
+  userId    String
+  ideaId    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  idea Idea? @relation(fields: [ideaId], references: [id], onDelete: SetNull)
+
+  @@index([userId, updatedAt])
+  @@index([ideaId])
+}
+
+model WorkspaceTask {
+  id        String    @id @default(cuid())
+  title     String
+  status    String    @default("TODO") // TODO, DONE
+  priority  String    @default("MEDIUM") // LOW, MEDIUM, HIGH
+  dueDate   DateTime?
+  assignee  String?
+  userId    String
+  ideaId    String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  idea Idea? @relation(fields: [ideaId], references: [id], onDelete: SetNull)
+
+  @@index([userId, status, updatedAt])
+  @@index([ideaId])
+}
+
+model UserDataset {
+  id           String   @id @default(cuid())
+  datasetKey   String
+  isBookmarked Boolean  @default(false)
+  isImported   Boolean  @default(false)
+  userId       String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, datasetKey])
+  @@index([userId, updatedAt])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  message   String   @db.Text
+  type      String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read, createdAt])
 }

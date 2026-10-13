@@ -12,6 +12,7 @@ export function TopNavbar({ toggleSidebar }: { toggleSidebar: () => void }) {
       <div className="flex items-center gap-4 flex-1">
         <button 
           onClick={toggleSidebar}
+          suppressHydrationWarning
           className="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
         >
           <Menu className="w-5 h-5" />
