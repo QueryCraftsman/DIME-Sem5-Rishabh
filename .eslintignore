@@ -1,0 +1,5 @@
+.venv/
+backend/
+node_modules/
+.next/
+public/
