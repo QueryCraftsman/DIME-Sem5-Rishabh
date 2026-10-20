@@ -234,18 +234,26 @@ export async function GET(req: Request) {
       (idea) => idea.status === "VALIDATED" || idea.status === "REJECTED" || idea.status === "COMPLETED"
     ).length;
 
-    // Fetch evidence count from FastAPI schema
-    const userAnalyses = await prisma.analyses.findMany({
-      where: { user_id: session.user.id },
-      select: { id: true }
-    });
-    const analysisIds = userAnalyses.map(a => a.id);
-    
-    const evidenceItems = await prisma.evidence.count({
-      where: { analysis_id: { in: analysisIds } }
-    });
+    // Fetch evidence count from FastAPI schema via safe raw SQL
+    let evidenceItems = 0;
+    let indexedSources = 0;
 
-    const indexedSources = await prisma.source_documents.count();
+    try {
+      const evidenceRows = await prisma.$queryRaw<Array<{ count: bigint | number }>>`
+        SELECT COUNT(e.id) as count 
+        FROM evidence e 
+        JOIN analyses a ON e.analysis_id = a.id 
+        WHERE a.user_id = ${session.user.id}
+      `;
+      evidenceItems = Number(evidenceRows[0]?.count ?? 0);
+
+      const sourcesRows = await prisma.$queryRaw<Array<{ count: bigint | number }>>`
+        SELECT COUNT(id) as count FROM source_documents
+      `;
+      indexedSources = Number(sourcesRows[0]?.count ?? 0);
+    } catch (dbErr) {
+      console.warn("Could not query external intelligence tables:", dbErr);
+    }
 
     const mixCounter = {
       "High Potential": 0,

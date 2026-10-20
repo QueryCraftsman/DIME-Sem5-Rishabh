@@ -1,78 +1,134 @@
 "use client";
 
-import React from "react";
-import { Search, Bell, Menu, Activity } from "lucide-react";
+import React, { useState } from "react";
 import { useSession } from "next-auth/react";
+import { PanelLeftOpen } from "lucide-react";
 
-export function TopNavbar({ toggleSidebar }: { toggleSidebar: () => void }) {
+export function TopNavbar({
+  toggleSidebar,
+  isSidebarOpen = true,
+}: {
+  toggleSidebar: () => void;
+  isSidebarOpen?: boolean;
+}) {
   const { data: session } = useSession();
+  const [isDark, setIsDark] = useState(false);
+
+  const toggleTheme = () => {
+    setIsDark(!isDark);
+    if (document.documentElement.classList.contains("dark")) {
+      document.documentElement.classList.remove("dark");
+    } else {
+      document.documentElement.classList.add("dark");
+    }
+  };
+
+  const displayName = session?.user?.name || "Alex Morgan";
+  const displayRole = "Product Lead";
 
   return (
-    <header className="h-[76px] shrink-0 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-4 lg:px-8 z-30 transition-colors">
-      <div className="flex items-center gap-4 flex-1">
-        <button 
-          onClick={toggleSidebar}
-          suppressHydrationWarning
-          className="p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg"
-        >
-          <Menu className="w-5 h-5" />
-        </button>
+    <header className="sticky top-0 z-20 w-full bg-surface-white border-b border-border-default shadow-sm">
+      <div className="flex justify-between items-center w-full px-6 h-16">
+        {/* Left side: Mobile Toggle & Desktop Expand Button */}
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            id="mobile-sidebar-toggle-btn"
+            onClick={toggleSidebar}
+            suppressHydrationWarning
+            className="lg:hidden p-2 rounded-lg text-text-secondary hover:text-text-strong hover:bg-canvas-bg transition-colors cursor-pointer"
+            title="Toggle Menu"
+            aria-label="Toggle Menu"
+          >
+            <span className="material-symbols-outlined text-[22px]">menu</span>
+          </button>
 
-        {/* Global Search */}
-        <div className="hidden md:flex max-w-md w-full relative group">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-dime-orange transition-colors" />
-          <input 
-            type="text" 
-            placeholder="Search ideas, markets or datasets..." 
-            className="w-full h-10 pl-10 pr-4 bg-slate-100 hover:bg-slate-200 focus:bg-white dark:bg-slate-800 dark:hover:bg-slate-700 dark:focus:bg-slate-900 border border-transparent focus:border-dime-orange rounded-xl text-[14px] text-dime-navy dark:text-white placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-orange-500/10 transition-all"
-          />
-          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
-            <kbd className="hidden sm:inline-flex items-center gap-1 px-1.5 h-5 text-[10px] font-medium text-slate-400 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded">
-              <span className="text-xs">⌘</span>K
+          {/* Desktop 21st.dev/shadcn sidebar button shown in navbar when left panel is hidden/collapsed */}
+          {!isSidebarOpen && (
+            <button
+              type="button"
+              id="navbar-sidebar-toggle-btn"
+              onClick={toggleSidebar}
+              suppressHydrationWarning
+              className="hidden lg:flex h-8 w-8 rounded-lg border border-border-default bg-surface-white hover:bg-canvas-bg hover:border-slate-300 text-text-secondary hover:text-text-strong shadow-[0_1px_2px_rgba(0,0,0,0.05)] active:scale-90 transition-all duration-150 items-center justify-center cursor-pointer group shrink-0"
+              title="Expand sidebar"
+              aria-label="Expand sidebar"
+            >
+              <PanelLeftOpen className="w-4 h-4 transition-transform duration-200 group-hover:scale-105" />
+            </button>
+          )}
+        </div>
+
+        {/* Center: Search & Engine Indicator (Middle of the navbar) */}
+        <div className="flex items-center justify-center gap-4 lg:gap-6 flex-1 max-w-2xl mx-auto px-4">
+          <div className="relative w-full max-w-md">
+            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-[18px]">
+              search
+            </span>
+            <input
+              className="w-full h-10 pl-9 pr-12 rounded-lg border border-border-default bg-surface-white text-text-primary placeholder:text-text-muted font-body-md text-body-md focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
+              placeholder="Search ideas, markets or datasets... ⌘K"
+              type="text"
+              suppressHydrationWarning
+            />
+            <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 px-1.5 py-0.5 text-[10px] font-semibold text-text-secondary bg-canvas-bg border border-border-default rounded">
+              ⌘K
             </kbd>
           </div>
-        </div>
-      </div>
 
-      <div className="flex items-center gap-4 lg:gap-6">
-        {/* Engine Status */}
-        <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-100 dark:bg-emerald-500/10 dark:border-emerald-500/20">
-          <Activity className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-          <span className="text-[12px] font-medium text-emerald-700 dark:text-emerald-400">
-            Engine v3.4 Active
-          </span>
+          <div className="hidden lg:flex items-center gap-2 px-2.5 py-1 rounded-full bg-success-soft border border-green-200 text-success-green shrink-0">
+            <span className="w-2 h-2 rounded-full bg-success-green animate-pulse" />
+            <span className="font-label-sm text-label-sm">Engine v3.4 Active</span>
+          </div>
         </div>
 
-        {/* Actions */}
-        <div className="flex items-center gap-2">
-          <button className="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors relative">
-            <Bell className="w-5 h-5" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-dime-orange ring-2 ring-white dark:ring-slate-900" />
+        {/* Right side: Actions, Notifications, Profile */}
+        <div className="flex items-center gap-4 shrink-0">
+          <button
+            className="p-2 rounded-lg text-text-secondary hover:text-text-strong hover:bg-canvas-bg transition-colors"
+            title="Toggle theme"
+            type="button"
+            onClick={toggleTheme}
+            suppressHydrationWarning
+          >
+            <span className="material-symbols-outlined text-[20px]">
+              {isDark ? "light_mode" : "dark_mode"}
+            </span>
           </button>
+
+          <button
+            className="relative p-2 rounded-lg text-text-secondary hover:text-text-strong hover:bg-canvas-bg transition-colors"
+            title="Notifications"
+            type="button"
+            suppressHydrationWarning
+          >
+            <span className="material-symbols-outlined text-[20px]">notifications</span>
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-primary rounded-full" />
+          </button>
+
+          <div className="h-6 w-px bg-border-default mx-1 hidden sm:block" />
+
+          <div className="flex items-center gap-3 pl-1">
+            <img
+              className="w-8 h-8 rounded-full border border-border-default object-cover"
+              alt="Alex Morgan"
+              src={
+                session?.user?.image ||
+                "https://lh3.googleusercontent.com/aida-public/AB6AXuAaVbH1YbOqCTKSmmtUgrYPcKELo-8-KiUHwLz0jXRAK1JUaNMcCDUnuV5qV5X3PfoIaBRG5gCKwKV2I9u70lI206V8w_oIxYda4YLLJBcWcXo2jQkKNTdqZItGoG5agy2IPmjpZyjIik4tym8--CWma6NE2uBK2cXhFSgPIZoE1R9pKlXoVfRFP6WAvdlS9Fy6cIrZxKmefUhzFe-_CygpHw6NoD_8HY2snqC8VhIRAMCCHOuwc_h4XA"
+              }
+            />
+            <div className="hidden sm:flex flex-col text-left">
+              <span className="font-body-semibold text-body-semibold text-text-strong">
+                {displayName}
+              </span>
+              <span className="font-caption text-caption text-text-secondary">
+                {displayRole}
+              </span>
+            </div>
+          </div>
         </div>
-
-        {/* Divider */}
-        <div className="hidden sm:block w-px h-8 bg-slate-200 dark:bg-slate-800" />
-
-        {/* User Profile */}
-        <button className="flex items-center gap-3 hover:opacity-80 transition-opacity text-left">
-          <div className="hidden sm:block">
-            <div className="text-[13px] font-semibold text-dime-navy dark:text-white leading-tight">
-              {session?.user?.name || "User"}
-            </div>
-            <div className="text-[12px] text-slate-500 dark:text-slate-400 leading-tight">
-              {session?.user?.email || "user@example.com"}
-            </div>
-          </div>
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-dime-orange to-dime-purple flex items-center justify-center text-white font-medium text-sm border-2 border-white dark:border-slate-800 shadow-sm overflow-hidden">
-            {session?.user?.image ? (
-              <img src={session.user.image} alt="Avatar" className="w-full h-full object-cover" />
-            ) : (
-              (session?.user?.name || "U")[0].toUpperCase()
-            )}
-          </div>
-        </button>
       </div>
     </header>
   );
 }
+

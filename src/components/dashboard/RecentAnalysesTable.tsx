@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight, FileText, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -6,6 +7,7 @@ type IdeaStatus = "Completed" | "In Progress" | "Draft";
 
 interface RecentAnalysis {
   id: string;
+  analysisId?: string | null;
   title: string;
   status: IdeaStatus;
   novelty: string;
@@ -27,6 +29,7 @@ const timeAgo = (dateStr: string) => {
 };
 
 export function RecentAnalysesTable() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<"all" | "completed" | "in_progress" | "draft">("all");
   const [data, setData] = useState<RecentAnalysis[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,6 +49,10 @@ export function RecentAnalysesTable() {
       setLoading(true);
       try {
         const res = await fetch(`/api/dashboard/recent-analyses?filter=${activeTab}&page=${page}`);
+        if (res.status === 401) {
+          if (interval) clearInterval(interval);
+          return;
+        }
         if (!res.ok) throw new Error("Failed to fetch");
         const result = await res.json();
         if (mounted) {
@@ -72,6 +79,14 @@ export function RecentAnalysesTable() {
       if (interval) clearInterval(interval);
     };
   }, [activeTab, page]);
+
+  const handleRowClick = (row: RecentAnalysis) => {
+    if (row.analysisId) {
+      router.push(`/ideas/${row.id}/analysis/${row.analysisId}`);
+    } else {
+      router.push(`/ideas/new`);
+    }
+  };
 
   return (
     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col shadow-sm overflow-hidden">
@@ -120,7 +135,11 @@ export function RecentAnalysesTable() {
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
               {data.map((row) => (
-                <tr key={row.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group cursor-pointer">
+                <tr 
+                  key={row.id} 
+                  onClick={() => handleRowClick(row)}
+                  className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group cursor-pointer"
+                >
                   <td className="px-5 py-4">
                     <span className="text-[14px] font-medium text-dime-navy dark:text-white group-hover:text-dime-orange transition-colors line-clamp-1">{row.title}</span>
                   </td>

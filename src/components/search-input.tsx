@@ -40,6 +40,7 @@ export function SearchInput() {
       </button>
       <Input
         type="text"
+        suppressHydrationWarning
         value={query}
         onChange={(event) => setQuery(event.target.value)}
         onKeyDown={handleKeyDown}

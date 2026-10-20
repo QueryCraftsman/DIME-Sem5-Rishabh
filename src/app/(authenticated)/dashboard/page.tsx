@@ -27,6 +27,10 @@ export default function DashboardPage() {
     const fetchDashboard = async () => {
       try {
         const res = await fetch("/api/dashboard/overview");
+        if (res.status === 401) {
+          clearInterval(interval);
+          return;
+        }
         if (!res.ok) throw new Error("Failed to fetch dashboard data");
         const json = await res.json();
         if (mounted) {

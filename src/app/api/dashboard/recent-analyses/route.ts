@@ -36,6 +36,24 @@ export async function GET(req: Request) {
       })
     ]);
 
+    const ideaIds = ideas.map(i => i.id);
+    const analysisMap = new Map<string, string>();
+    if (ideaIds.length > 0) {
+      try {
+        const rows = await prisma.$queryRaw<Array<{ id: string; idea_id: string }>>`
+          SELECT DISTINCT ON (idea_id) id, idea_id
+          FROM analyses
+          WHERE idea_id = ANY(${ideaIds})
+          ORDER BY idea_id, created_at DESC
+        `;
+        for (const row of rows) {
+          analysisMap.set(row.idea_id, row.id);
+        }
+      } catch {
+        // Safe fallback if table is not yet populated
+      }
+    }
+
     const formattedIdeas = ideas.map(idea => {
       // Logic for high/med/low values based on score
       const getLabel = (score: number | null) => {
@@ -57,6 +75,7 @@ export async function GET(req: Request) {
 
       return {
         id: idea.id,
+        analysisId: analysisMap.get(idea.id) ?? null,
         title: idea.title,
         status: getStatusLabel(idea.status),
         novelty: getLabel(idea.innovationScore),

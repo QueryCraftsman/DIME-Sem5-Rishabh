@@ -73,6 +73,34 @@
   --color-dime-purple-soft: var(--dime-purple-soft);
   --color-dime-cyan: var(--dime-cyan);
   --color-dime-cyan-soft: var(--dime-cyan-soft);
+
+  /* Reference tokens from Phase 12 design specification */
+  --color-primary: #EA580C;
+  --color-brand-hover: #F97316;
+  --color-brand-pressed: #C2410C;
+  --color-brand-soft: #FFF7ED;
+  --color-brand-pale: #FFEDD5;
+  --color-canvas-bg: #F8FAFC;
+  --color-surface-white: #FFFFFF;
+  --color-text-primary: #111827;
+  --color-text-strong: #0F172B;
+  --color-text-secondary: #64748B;
+  --color-text-muted: #94A3B8;
+  --color-border-default: #E2E8F0;
+  --color-border-subtle: #E5E7EB;
+  --color-border-hover: #CBD5E1;
+  --color-success-green: #16A34A;
+  --color-success-soft: #F0FDF4;
+  --color-warning-amber: #D97706;
+  --color-warning-soft: #FFFBEB;
+  --color-danger-red: #DC2626;
+  --color-danger-soft: #FEF2F2;
+  --color-ai-purple: #8B5CF6;
+  --color-ai-purple-soft: #F5F3FF;
+  --color-ai-purple-border: #DDD6FE;
+  --color-data-cyan: #06B6D4;
+  --color-data-cyan-soft: #ECFEFF;
+  --color-on-primary: #FFFFFF;
 }
 
 :root {
@@ -239,6 +267,14 @@
 }
 
 @layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
   .dark {
     color-scheme: dark;
   }
@@ -376,4 +412,35 @@
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
   vertical-align: middle;
 }
+
+/* ── Reference Typography Tokens from Design Spec ── */
+.font-display-hero { font-family: 'Inter', sans-serif; font-size: 48px; line-height: 56px; font-weight: 700; }
+.text-display-hero { font-size: 48px; line-height: 56px; font-weight: 700; }
+.font-display-hero-mobile { font-family: 'Inter', sans-serif; font-size: 32px; line-height: 40px; font-weight: 700; }
+.text-display-hero-mobile { font-size: 32px; line-height: 40px; font-weight: 700; }
+.font-headline-lg { font-family: 'Inter', sans-serif; font-size: 32px; line-height: 40px; font-weight: 700; }
+.text-headline-lg { font-size: 32px; line-height: 40px; font-weight: 700; }
+.font-headline-lg-mobile { font-family: 'Inter', sans-serif; font-size: 24px; line-height: 32px; font-weight: 700; }
+.text-headline-lg-mobile { font-size: 24px; line-height: 32px; font-weight: 700; }
+.font-headline-md { font-family: 'Inter', sans-serif; font-size: 24px; line-height: 32px; font-weight: 600; }
+.text-headline-md { font-size: 24px; line-height: 32px; font-weight: 600; }
+.font-headline-sm { font-family: 'Inter', sans-serif; font-size: 20px; line-height: 28px; font-weight: 600; }
+.text-headline-sm { font-size: 20px; line-height: 28px; font-weight: 600; }
+.font-kpi-metric { font-family: 'Inter', sans-serif; font-size: 36px; line-height: 44px; font-weight: 700; }
+.text-kpi-metric { font-size: 36px; line-height: 44px; font-weight: 700; }
+.font-title-card { font-family: 'Inter', sans-serif; font-size: 16px; line-height: 24px; font-weight: 600; }
+.text-title-card { font-size: 16px; line-height: 24px; font-weight: 600; }
+.font-body-lg { font-family: 'Inter', sans-serif; font-size: 16px; line-height: 24px; font-weight: 400; }
+.text-body-lg { font-size: 16px; line-height: 24px; font-weight: 400; }
+.font-body-md { font-family: 'Inter', sans-serif; font-size: 14px; line-height: 20px; font-weight: 400; }
+.text-body-md { font-size: 14px; line-height: 20px; font-weight: 400; }
+.font-body-semibold { font-family: 'Inter', sans-serif; font-size: 14px; line-height: 20px; font-weight: 600; }
+.text-body-semibold { font-size: 14px; line-height: 20px; font-weight: 600; }
+.font-label-md { font-family: 'Inter', sans-serif; font-size: 13px; line-height: 18px; font-weight: 500; }
+.text-label-md { font-size: 13px; line-height: 18px; font-weight: 500; }
+.font-label-sm { font-family: 'Inter', sans-serif; font-size: 12px; line-height: 16px; font-weight: 600; }
+.text-label-sm { font-size: 12px; line-height: 16px; font-weight: 600; }
+.font-caption { font-family: 'Inter', sans-serif; font-size: 11px; line-height: 16px; font-weight: 500; }
+.text-caption { font-size: 11px; line-height: 16px; font-weight: 500; }
+
 

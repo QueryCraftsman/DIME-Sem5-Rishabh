@@ -13,26 +13,34 @@ export default function AuthenticatedLayout({
 
   // Responsive sidebar collapse on small screens
   useEffect(() => {
+    let prevWidth = window.innerWidth;
     const handleResize = () => {
-      if (window.innerWidth < 1024) {
+      const currentWidth = window.innerWidth;
+      if (currentWidth < 1024 && prevWidth >= 1024) {
         setIsSidebarOpen(false);
-      } else {
+      } else if (currentWidth >= 1024 && prevWidth < 1024) {
         setIsSidebarOpen(true);
       }
+      prevWidth = currentWidth;
     };
     
     // Initial check
-    handleResize();
+    if (window.innerWidth < 1024) {
+      setIsSidebarOpen(false);
+    }
     
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   return (
-    <div className="flex h-screen bg-[#F8FAFC] dark:bg-slate-900 overflow-hidden font-sans">
+    <div className="flex h-screen bg-canvas-bg text-text-strong font-body-md overflow-hidden antialiased">
       <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
-        <TopNavbar toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
+        <TopNavbar
+          toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+          isSidebarOpen={isSidebarOpen}
+        />
         <main className="flex-1 overflow-y-auto overflow-x-hidden">
           {children}
         </main>
@@ -40,3 +48,4 @@ export default function AuthenticatedLayout({
     </div>
   );
 }
+
