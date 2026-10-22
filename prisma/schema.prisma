@@ -54,6 +54,7 @@ model User {
   tasks         WorkspaceTask[]
   datasets      UserDataset[]
   notifications Notification[]
+  preference    UserPreference?
 }
 
 model VerificationToken {
@@ -84,6 +85,14 @@ model Idea {
   marketPainScore  Float?
   opportunityScore Float?
 
+  // Additional creation parameters
+  analysisDepth         String?
+  budget                String?
+  formFactors           String?
+  preferredTechnologies String?
+  teamSize              String?
+  timeline              String?
+
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -92,6 +101,24 @@ model Idea {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model UserPreference {
+  id                             String   @id @default(cuid())
+  userId                         String   @unique
+  theme                          String   @default("system")
+  emailNotifications             Boolean  @default(true)
+  analysisCompletedNotifications Boolean  @default(true)
+  analysisFailedNotifications    Boolean  @default(true)
+  weeklyDigest                   Boolean  @default(false)
+  defaultAnalysisDepth           String   @default("STANDARD")
+  defaultWorkspaceView           String   @default("overview")
+  createdAt                      DateTime @default(now())
+  updatedAt                      DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model Note {

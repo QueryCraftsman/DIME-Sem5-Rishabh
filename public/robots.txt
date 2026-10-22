@@ -1,0 +1,6 @@
+# DIME robots.txt
+User-agent: *
+Allow: /
+Disallow: /api/
+
+Sitemap: https://dime.app/sitemap.xml
