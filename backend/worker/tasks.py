@@ -4,10 +4,12 @@ DIME Backend - Celery Tasks.
 
 import asyncio
 import logging
+import uuid
+from datetime import datetime, timezone
 from uuid import UUID
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.orm import selectinload
 
 from backend.core.database import async_session_factory, engine
@@ -94,6 +96,26 @@ async def _run_analysis_pipeline_async(analysis_id: UUID) -> None:
                             analysis.status = AnalysisStatus(state_update["status"])
                             if analysis.status == AnalysisStatus.COMPLETED:
                                 analysis.completed_at = datetime.now(timezone.utc)
+                                # Persist real Notification on completion
+                                if analysis.user_id and analysis.user_id != "anonymous":
+                                    try:
+                                        notif_id = f"notif_{uuid.uuid4().hex[:16]}"
+                                        await session.execute(
+                                            text("""
+                                                INSERT INTO "Notification" ("id", "userId", "title", "message", "type", "read", "createdAt")
+                                                VALUES (:id, :userId, :title, :message, :type, false, :createdAt)
+                                            """),
+                                            {
+                                                "id": notif_id,
+                                                "userId": analysis.user_id,
+                                                "title": "Analysis Completed",
+                                                "message": f"Validation report ready for '{analysis.title or 'Your idea'}'",
+                                                "type": "analysis_completed",
+                                                "createdAt": datetime.now(timezone.utc),
+                                            }
+                                        )
+                                    except Exception as notif_err:
+                                        logger.warning(f"Failed to record completion notification: {notif_err}")
                         except ValueError:
                             pass
                     if "current_stage" in state_update:
@@ -111,6 +133,25 @@ async def _run_analysis_pipeline_async(analysis_id: UUID) -> None:
             logger.exception(f"Error in analysis pipeline for {analysis_id}: {e}")
             analysis.status = AnalysisStatus.FAILED
             analysis.error_message = str(e)
+            if analysis.user_id and analysis.user_id != "anonymous":
+                try:
+                    notif_id = f"notif_{uuid.uuid4().hex[:16]}"
+                    await session.execute(
+                        text("""
+                            INSERT INTO "Notification" ("id", "userId", "title", "message", "type", "read", "createdAt")
+                            VALUES (:id, :userId, :title, :message, :type, false, :createdAt)
+                        """),
+                        {
+                            "id": notif_id,
+                            "userId": analysis.user_id,
+                            "title": "Analysis Failed",
+                            "message": f"Analysis for '{analysis.title or 'Your idea'}' encountered an error. You can retry from your workspace.",
+                            "type": "analysis_failed",
+                            "createdAt": datetime.now(timezone.utc),
+                        }
+                    )
+                except Exception as notif_err:
+                    logger.warning(f"Failed to record failure notification: {notif_err}")
             await session.commit()
             raise
         finally:

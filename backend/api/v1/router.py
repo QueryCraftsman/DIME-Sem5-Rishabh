@@ -18,7 +18,7 @@ api_v1_router.include_router(health.router)
 # ── Future route modules ────────────────────────────────────
 from backend.api.v1 import analyses
 api_v1_router.include_router(analyses.router, prefix="/analyses", tags=["analyses"])
-# api_v1_router.include_router(reports.router, prefix="/reports", tags=["reports"])
-# api_v1_router.include_router(evidence.router, prefix="/evidence", tags=["evidence"])
-# api_v1_router.include_router(competitors.router, prefix="/competitors", tags=["competitors"])
-# api_v1_router.include_router(sources.router, prefix="/sources", tags=["sources"])
+
+from backend.api.v1 import ideas
+api_v1_router.include_router(ideas.router, prefix="/ideas", tags=["ideas"])
+

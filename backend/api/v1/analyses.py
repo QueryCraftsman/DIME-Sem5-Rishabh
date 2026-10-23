@@ -29,6 +29,61 @@ from sqlalchemy import select
 router = APIRouter()
 
 
+@router.get("")
+async def list_analyses(
+    idea_id: str | None = None,
+    user_id: str | None = None,
+    limit: int = 50,
+    db: AsyncSession = Depends(get_db)
+) -> dict[str, Any]:
+    """List analyses, optionally filtered by idea_id or user_id."""
+    query = select(Analysis).order_by(Analysis.created_at.desc())
+    if idea_id:
+        query = query.where(Analysis.idea_id == idea_id)
+    if user_id and user_id != "anonymous":
+        query = query.where(Analysis.user_id == user_id)
+    query = query.limit(limit)
+
+    result = await db.execute(query)
+    analyses = result.scalars().all()
+
+    items = []
+    for a in analyses:
+        scores_res = await db.execute(
+            select(AnalysisScore).where(AnalysisScore.analysis_id == a.id)
+        )
+        scores_list = scores_res.scalars().all()
+        scores_dict = {
+            s.metric_name: {
+                "score": s.score,
+                "status": s.status,
+                "explanation": s.explanation,
+            }
+            for s in scores_list
+        }
+
+        items.append({
+            "id": a.id,
+            "idea_id": a.idea_id,
+            "user_id": a.user_id,
+            "title": a.title,
+            "description": a.description,
+            "domain": a.domain,
+            "target_audience": a.target_audience,
+            "status": a.status,
+            "current_stage": a.current_stage or "PENDING",
+            "progress": a.progress or 0,
+            "sources_attempted": a.sources_attempted or 0,
+            "sources_succeeded": a.sources_succeeded or 0,
+            "started_at": a.started_at.isoformat() if a.started_at else None,
+            "completed_at": a.completed_at.isoformat() if a.completed_at else None,
+            "created_at": a.created_at.isoformat() if a.created_at else None,
+            "scores": scores_dict,
+        })
+
+    return {"analyses": items, "total": len(items)}
+
+
 @router.post("")
 async def create_analysis(
     payload: dict[str, Any],
