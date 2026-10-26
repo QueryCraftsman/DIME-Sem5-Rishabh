@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
-import { auth } from "../../../../../auth";
+import { getAuthenticatedUserId } from "@/lib/server-auth";
 import { prisma } from "../../../../../lib/prisma";
 import { getOpportunityBucket } from "@/lib/idea-analysis";
+
+// In-memory cache for global database counts to avoid full-table scans on every poll
+let cachedSourcesCount: { value: number; timestamp: number } | null = null;
+const SOURCES_CACHE_TTL_MS = 60 * 1000;
 
 const mixColors = {
   "High Potential": "#ea580c",
@@ -89,9 +93,9 @@ const extractProblemKeywords = (text: string): string[] => {
 
 export async function GET(req: Request) {
   try {
-    const session = await auth();
+    const userId = await getAuthenticatedUserId();
 
-    if (!session?.user?.id) {
+    if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
@@ -101,25 +105,29 @@ export async function GET(req: Request) {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - rangeDays);
 
-    const scopedIdeas = await prisma.idea.findMany({
-      where: {
-        userId: session.user.id,
-        createdAt: {
-          gte: startDate,
-        },
-      },
-      orderBy: {
-        createdAt: "desc",
+    // Single query with projected fields only (prevents N+1 and duplicate queries)
+    const allIdeas = await prisma.idea.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        status: true,
+        industry: true,
+        overallViability: true,
+        innovationScore: true,
+        marketDemand: true,
+        noveltyScore: true,
+        marketPainScore: true,
+        opportunityScore: true,
+        createdAt: true,
+        updatedAt: true,
       },
     });
 
-    const allIdeas =
-      scopedIdeas.length > 0
-        ? scopedIdeas
-        : await prisma.idea.findMany({
-            where: { userId: session.user.id },
-            orderBy: { createdAt: "desc" },
-          });
+    const scopedIdeas = allIdeas.filter((idea) => idea.createdAt >= startDate);
+    const ideasToScore = scopedIdeas.length > 0 ? scopedIdeas : allIdeas;
 
     const analyzedIdeas = allIdeas.filter(
       (idea) =>
@@ -201,29 +209,36 @@ export async function GET(req: Request) {
       .slice(0, 5)
       .map(([keyword]) => keyword);
 
-    const [userDatasets, notes, tasks] = await Promise.all([
-      prisma.userDataset.findMany({
-        where: {
-          userId: session.user.id,
-        },
-      }),
+    const [notes, tasks] = await Promise.all([
       prisma.note.findMany({
         where: {
-          userId: session.user.id,
+          userId,
         },
         orderBy: {
           updatedAt: "desc",
         },
         take: 6,
+        select: {
+          id: true,
+          title: true,
+          isPinned: true,
+          updatedAt: true,
+        },
       }),
       prisma.workspaceTask.findMany({
         where: {
-          userId: session.user.id,
+          userId,
         },
         orderBy: {
           updatedAt: "desc",
         },
         take: 6,
+        select: {
+          id: true,
+          title: true,
+          status: true,
+          updatedAt: true,
+        },
       }),
     ]);
 
@@ -243,14 +258,20 @@ export async function GET(req: Request) {
         SELECT COUNT(e.id) as count 
         FROM evidence e 
         JOIN analyses a ON e.analysis_id = a.id 
-        WHERE a.user_id = ${session.user.id}
+        WHERE a.user_id = ${userId}
       `;
       evidenceItems = Number(evidenceRows[0]?.count ?? 0);
 
-      const sourcesRows = await prisma.$queryRaw<Array<{ count: bigint | number }>>`
-        SELECT COUNT(id) as count FROM source_documents
-      `;
-      indexedSources = Number(sourcesRows[0]?.count ?? 0);
+      // Check in-memory cache for source_documents count to avoid full-table scans
+      if (cachedSourcesCount && (Date.now() - cachedSourcesCount.timestamp < SOURCES_CACHE_TTL_MS)) {
+        indexedSources = cachedSourcesCount.value;
+      } else {
+        const sourcesRows = await prisma.$queryRaw<Array<{ count: bigint | number }>>`
+          SELECT COUNT(id) as count FROM source_documents
+        `;
+        indexedSources = Number(sourcesRows[0]?.count ?? 0);
+        cachedSourcesCount = { value: indexedSources, timestamp: Date.now() };
+      }
     } catch (dbErr) {
       console.warn("Could not query external intelligence tables:", dbErr);
     }

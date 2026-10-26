@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
-import { auth } from "@/lib/server-auth";
+import { auth, getAuthenticatedUserId } from "@/lib/server-auth";
 import { prisma } from "@/lib/db";
 import {
   buildEmailChangeIdentifier,
@@ -84,13 +84,7 @@ const buildProfileResponse = (user: ProfileRow) => {
 };
 
 const requireSessionUserId = async () => {
-  const session = await auth();
-
-  if (!session?.user?.id) {
-    return null;
-  }
-
-  return session.user.id;
+  return await getAuthenticatedUserId();
 };
 
 export async function GET() {

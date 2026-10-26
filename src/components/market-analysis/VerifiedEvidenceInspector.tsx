@@ -1,6 +1,5 @@
-"use client";
-
 import React, { useState } from "react";
+import { CheckCircle2, Quote, ExternalLink, BookmarkPlus, Check, Flag } from "lucide-react";
 import type { PainPointRankingItem } from "@/types/market-analysis";
 
 interface VerifiedEvidenceInspectorProps {
@@ -72,9 +71,7 @@ export function VerifiedEvidenceInspector({
     <div className="bg-surface-white rounded-xl border-2 border-primary/40 p-6 shadow-md relative">
       <div className="flex items-center justify-between pb-3 border-b border-border-default">
         <div className="flex items-center gap-2">
-          <span className="material-symbols-outlined text-primary text-[20px]">
-            fact_check
-          </span>
+          <CheckCircle2 className="w-5 h-5 text-primary" />
           <h2 className="font-title-card text-title-card text-text-strong">
             Verified Evidence Inspector
           </h2>
@@ -105,9 +102,7 @@ export function VerifiedEvidenceInspector({
 
       {/* Verified Excerpt Quote */}
       <div className="mt-4 p-3.5 bg-brand-soft rounded-lg border border-brand-pale text-text-strong font-body-md text-body-md relative">
-        <span className="material-symbols-outlined absolute top-2 left-2 text-primary/20 text-3xl pointer-events-none select-none">
-          format_quote
-        </span>
+        <Quote className="w-6 h-6 absolute top-2 left-2 text-primary/20 pointer-events-none select-none" />
         <p className="relative z-10 pl-2 text-sm leading-relaxed text-slate-800">
           {evidence.supportingText}
         </p>
@@ -150,9 +145,7 @@ export function VerifiedEvidenceInspector({
           rel="noopener noreferrer"
         >
           <span>Open Original Source</span>
-          <span className="material-symbols-outlined text-[14px]">
-            open_in_new
-          </span>
+          <ExternalLink className="w-3.5 h-3.5" />
         </a>
 
         <div className="grid grid-cols-2 gap-2">
@@ -166,9 +159,11 @@ export function VerifiedEvidenceInspector({
             }`}
             type="button"
           >
-            <span className="material-symbols-outlined text-[16px]">
-              {noteSaved ? "check" : "bookmark_add"}
-            </span>
+            {noteSaved ? (
+              <Check className="w-4 h-4 text-green-700" />
+            ) : (
+              <BookmarkPlus className="w-4 h-4" />
+            )}
             <span>
               {isSavingNote
                 ? "Saving..."
@@ -188,9 +183,11 @@ export function VerifiedEvidenceInspector({
             }`}
             type="button"
           >
-            <span className="material-symbols-outlined text-[16px]">
-              {isFlagged ? "check" : "flag"}
-            </span>
+            {isFlagged ? (
+              <Check className="w-4 h-4 text-red-700" />
+            ) : (
+              <Flag className="w-4 h-4" />
+            )}
             <span>
               {isFlagging
                 ? "Flagging..."

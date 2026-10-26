@@ -1,6 +1,5 @@
-"use client";
-
 import React from "react";
+import { Lightbulb } from "lucide-react";
 import type { StrategicOpportunity } from "@/types/market-analysis";
 
 interface StrategicOpportunityCardProps {
@@ -13,9 +12,7 @@ export function StrategicOpportunityCard({
   return (
     <div className="p-4 bg-brand-soft rounded-xl border border-brand-pale">
       <div className="flex items-start gap-3">
-        <span className="material-symbols-outlined text-primary text-[22px] shrink-0 mt-0.5">
-          lightbulb
-        </span>
+        <Lightbulb className="w-5 h-5 text-primary shrink-0 mt-0.5" />
         <div>
           <h3 className="font-body-semibold text-body-semibold text-brand-pressed">
             {opportunity.heading}

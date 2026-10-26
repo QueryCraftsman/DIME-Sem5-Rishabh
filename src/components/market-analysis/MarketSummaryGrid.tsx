@@ -1,6 +1,5 @@
-"use client";
-
 import React from "react";
+import { TrendingUp, ArrowUp, ShieldCheck, Clock } from "lucide-react";
 import type { MarketSummaryMetrics } from "@/types/market-analysis";
 
 interface MarketSummaryGridProps {
@@ -19,9 +18,7 @@ export function MarketSummaryGrid({ summary }: MarketSummaryGridProps) {
             Market Demand
           </span>
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-success-soft text-success-green border border-green-200">
-            <span className="material-symbols-outlined text-[14px]">
-              trending_up
-            </span>
+            <TrendingUp className="w-3.5 h-3.5" />
             {marketDemand.badge}
           </span>
         </div>
@@ -29,9 +26,7 @@ export function MarketSummaryGrid({ summary }: MarketSummaryGridProps) {
           {marketDemand.level}
         </div>
         <div className="flex items-center gap-1.5 mt-2 font-caption text-caption text-text-secondary">
-          <span className="material-symbols-outlined text-success-green text-[16px]">
-            arrow_upward
-          </span>
+          <ArrowUp className="w-4 h-4 text-success-green" />
           <span className="text-success-green font-semibold">
             {marketDemand.trendPercent}
           </span>{" "}
@@ -73,9 +68,7 @@ export function MarketSummaryGrid({ summary }: MarketSummaryGridProps) {
           {confidenceScore.scorePercent}%
         </div>
         <div className="flex items-center gap-1.5 mt-2 font-caption text-caption text-text-secondary">
-          <span className="material-symbols-outlined text-ai-purple text-[16px]">
-            verified
-          </span>
+          <ShieldCheck className="w-4 h-4 text-ai-purple" />
           <span>
             {confidenceScore.levelText} • {confidenceScore.provenanceClaim}
           </span>
@@ -96,7 +89,7 @@ export function MarketSummaryGrid({ summary }: MarketSummaryGridProps) {
           {freshness.displayDate}
         </div>
         <div className="flex items-center gap-1.5 mt-2 font-caption text-caption text-text-secondary">
-          <span className="material-symbols-outlined text-[16px]">schedule</span>
+          <Clock className="w-4 h-4 text-text-muted" />
           <span>{freshness.relativeCrawlText}</span>
         </div>
       </div>

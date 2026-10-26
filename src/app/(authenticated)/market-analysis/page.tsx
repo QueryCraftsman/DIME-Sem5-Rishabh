@@ -12,6 +12,7 @@ import { PainPointsRanking } from "@/components/market-analysis/PainPointsRankin
 import { SentimentBreakdown } from "@/components/market-analysis/SentimentBreakdown";
 import { VerifiedEvidenceInspector } from "@/components/market-analysis/VerifiedEvidenceInspector";
 import { StrategicOpportunityCard } from "@/components/market-analysis/StrategicOpportunityCard";
+import { AlertCircle } from "lucide-react";
 
 function MarketAnalysisContent() {
   const searchParams = useSearchParams();
@@ -72,9 +73,7 @@ function MarketAnalysisContent() {
     return (
       <div className="p-8 max-w-[1600px] w-full">
         <div className="p-8 bg-surface-white rounded-xl border border-border-default text-center space-y-4">
-          <span className="material-symbols-outlined text-4xl text-danger-red">
-            error
-          </span>
+          <AlertCircle className="w-10 h-10 text-danger-red mx-auto" />
           <h2 className="text-xl font-bold text-text-strong">
             Unable to load Market Intelligence
           </h2>

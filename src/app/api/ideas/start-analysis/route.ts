@@ -39,17 +39,35 @@ export async function POST(req: Request) {
       );
     }
 
-    // 1. Create the idea in Prisma for history
-    const created = await prisma.idea.create({
-      data: {
-        title,
-        description,
-        targetAudience,
-        industry,
-        userId: session.user.id,
-        status: "ANALYZING",
-      },
-    });
+    // 1. Resolve or create the idea in Prisma
+    let targetIdeaId = typeof body?.ideaId === "string" ? body.ideaId : null;
+    if (targetIdeaId) {
+      const existing = await prisma.idea.findFirst({
+        where: { id: targetIdeaId, userId: session.user.id },
+      });
+      if (existing) {
+        await prisma.idea.update({
+          where: { id: targetIdeaId },
+          data: { status: "ANALYZING" },
+        });
+      } else {
+        targetIdeaId = null;
+      }
+    }
+
+    if (!targetIdeaId) {
+      const created = await prisma.idea.create({
+        data: {
+          title,
+          description,
+          targetAudience,
+          industry,
+          userId: session.user.id,
+          status: "ANALYZING",
+        },
+      });
+      targetIdeaId = created.id;
+    }
 
     // 2. Send request to FastAPI backend
     const fastApiUrl = process.env.FASTAPI_URL || "http://127.0.0.1:8000";
@@ -64,7 +82,7 @@ export async function POST(req: Request) {
         targetAudience,
         industry,
         analysisDepth,
-        idea_id: created.id,
+        idea_id: targetIdeaId,
         user_id: session.user.id,
       }),
     });
@@ -90,7 +108,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       id: analysisId, // Return the FastAPI analysis ID directly so the frontend uses it!
-      db_idea_id: created.id,
+      db_idea_id: targetIdeaId,
       status: "pending",
       message: "Analysis queued successfully",
     });

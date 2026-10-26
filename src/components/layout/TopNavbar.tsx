@@ -1,8 +1,18 @@
 "use client";
 
-import React, { useState } from "react";
-import { useSession } from "next-auth/react";
-import { PanelLeftOpen } from "lucide-react";
+import React from "react";
+import Link from "next/link";
+import dynamic from "next/dynamic";
+import { Menu, PanelLeftOpen } from "lucide-react";
+import { DimeLogo } from "@/components/brand/DimeLogo";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { NotificationPopover } from "@/components/layout/NotificationPopover";
+import { ProfileDropdown } from "@/components/layout/ProfileDropdown";
+
+const GlobalSearchModal = dynamic(
+  () => import("@/components/layout/GlobalSearchModal").then((mod) => mod.GlobalSearchModal),
+  { ssr: false }
+);
 
 export function TopNavbar({
   toggleSidebar,
@@ -11,46 +21,40 @@ export function TopNavbar({
   toggleSidebar: () => void;
   isSidebarOpen?: boolean;
 }) {
-  const { data: session } = useSession();
-  const [isDark, setIsDark] = useState(false);
-
-  const toggleTheme = () => {
-    setIsDark(!isDark);
-    if (document.documentElement.classList.contains("dark")) {
-      document.documentElement.classList.remove("dark");
-    } else {
-      document.documentElement.classList.add("dark");
-    }
-  };
-
-  const displayName = session?.user?.name || "Alex Morgan";
-  const displayRole = "Product Lead";
-
   return (
-    <header className="sticky top-0 z-20 w-full bg-surface-white border-b border-border-default shadow-sm">
-      <div className="flex justify-between items-center w-full px-6 h-16">
+    <header className="sticky top-0 z-20 w-full bg-white/95 dark:bg-[#1A1816]/95 backdrop-blur-md border-b border-[#EAE4DC] dark:border-[#2E2A25] shadow-[0_1px_2px_rgba(0,0,0,0.02)] transition-colors duration-200">
+      <div className="flex justify-between items-center w-full px-3.5 sm:px-6 h-16">
         {/* Left side: Mobile Toggle & Desktop Expand Button */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <button
             type="button"
             id="mobile-sidebar-toggle-btn"
             onClick={toggleSidebar}
             suppressHydrationWarning
-            className="lg:hidden p-2 rounded-lg text-text-secondary hover:text-text-strong hover:bg-canvas-bg transition-colors cursor-pointer"
+            className="lg:hidden p-2 rounded-xl text-[#776E65] dark:text-[#C1B8AD] hover:text-[#171717] dark:hover:text-[#F4F0E9] hover:bg-[#EFEAE2] dark:hover:bg-[#26231F] transition-colors cursor-pointer shrink-0"
             title="Toggle Menu"
             aria-label="Toggle Menu"
           >
-            <span className="material-symbols-outlined text-[22px]">menu</span>
+            <Menu className="w-5 h-5" />
           </button>
 
-          {/* Desktop 21st.dev/shadcn sidebar button shown in navbar when left panel is hidden/collapsed */}
+          {/* Mobile brand icon */}
+          <Link
+            href="/dashboard"
+            className="lg:hidden flex items-center justify-center shrink-0"
+            title="DIME"
+          >
+            <DimeLogo size="sm" />
+          </Link>
+
+          {/* Desktop sidebar expand button shown in navbar when left panel is collapsed */}
           {!isSidebarOpen && (
             <button
               type="button"
               id="navbar-sidebar-toggle-btn"
               onClick={toggleSidebar}
               suppressHydrationWarning
-              className="hidden lg:flex h-8 w-8 rounded-lg border border-border-default bg-surface-white hover:bg-canvas-bg hover:border-slate-300 text-text-secondary hover:text-text-strong shadow-[0_1px_2px_rgba(0,0,0,0.05)] active:scale-90 transition-all duration-150 items-center justify-center cursor-pointer group shrink-0"
+              className="hidden lg:flex h-8 w-8 rounded-lg border border-[#EAE4DC] dark:border-[#34302B] bg-white dark:bg-[#201E1B] hover:bg-[#EFEAE2] dark:hover:bg-[#26231F] text-[#776E65] dark:text-[#C1B8AD] hover:text-[#171717] dark:hover:text-[#F4F0E9] shadow-xs active:scale-95 transition-all duration-150 items-center justify-center cursor-pointer group shrink-0"
               title="Expand sidebar"
               aria-label="Expand sidebar"
             >
@@ -60,72 +64,29 @@ export function TopNavbar({
         </div>
 
         {/* Center: Search & Engine Indicator (Middle of the navbar) */}
-        <div className="flex items-center justify-center gap-4 lg:gap-6 flex-1 max-w-2xl mx-auto px-4">
-          <div className="relative w-full max-w-md">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-[18px]">
-              search
-            </span>
-            <input
-              className="w-full h-10 pl-9 pr-12 rounded-lg border border-border-default bg-surface-white text-text-primary placeholder:text-text-muted font-body-md text-body-md focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-colors"
-              placeholder="Search ideas, markets or datasets... ⌘K"
-              type="text"
-              suppressHydrationWarning
-            />
-            <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 px-1.5 py-0.5 text-[10px] font-semibold text-text-secondary bg-canvas-bg border border-border-default rounded">
-              ⌘K
-            </kbd>
+        <div className="flex items-center justify-center gap-2 sm:gap-4 lg:gap-6 flex-1 max-w-2xl mx-auto px-2 sm:px-4 min-w-0">
+          <div className="w-full max-w-md min-w-0">
+            <GlobalSearchModal />
           </div>
 
-          <div className="hidden lg:flex items-center gap-2 px-2.5 py-1 rounded-full bg-success-soft border border-green-200 text-success-green shrink-0">
-            <span className="w-2 h-2 rounded-full bg-success-green animate-pulse" />
-            <span className="font-label-sm text-label-sm">Engine v3.4 Active</span>
+          <div className="hidden lg:flex items-center gap-2 px-3 py-1 rounded-full bg-[#F0FDF4] dark:bg-[#1D342A] border border-green-200/80 dark:border-emerald-800/40 text-[#159B72] dark:text-[#55C99A] shrink-0 shadow-xs">
+            <span className="w-2 h-2 rounded-full bg-[#159B72] dark:bg-[#55C99A] animate-pulse" />
+            <span className="text-xs font-semibold">Engine v3.4 Active</span>
           </div>
         </div>
 
         {/* Right side: Actions, Notifications, Profile */}
-        <div className="flex items-center gap-4 shrink-0">
-          <button
-            className="p-2 rounded-lg text-text-secondary hover:text-text-strong hover:bg-canvas-bg transition-colors"
-            title="Toggle theme"
-            type="button"
-            onClick={toggleTheme}
-            suppressHydrationWarning
-          >
-            <span className="material-symbols-outlined text-[20px]">
-              {isDark ? "light_mode" : "dark_mode"}
-            </span>
-          </button>
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+          {/* Animated Premium Theme Toggle */}
+          <ThemeToggle />
 
-          <button
-            className="relative p-2 rounded-lg text-text-secondary hover:text-text-strong hover:bg-canvas-bg transition-colors"
-            title="Notifications"
-            type="button"
-            suppressHydrationWarning
-          >
-            <span className="material-symbols-outlined text-[20px]">notifications</span>
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-primary rounded-full" />
-          </button>
+          {/* Real-time Notification Popover */}
+          <NotificationPopover />
 
-          <div className="h-6 w-px bg-border-default mx-1 hidden sm:block" />
+          <div className="h-6 w-px bg-[#EAE4DC] dark:bg-[#2E2A25] mx-0.5 hidden sm:block" />
 
-          <div className="flex items-center gap-3 pl-1">
-            <img
-              className="w-8 h-8 rounded-full border border-border-default object-cover"
-              alt="Alex Morgan"
-              src={
-                session?.user?.image ||
-                "https://lh3.googleusercontent.com/aida-public/AB6AXuAaVbH1YbOqCTKSmmtUgrYPcKELo-8-KiUHwLz0jXRAK1JUaNMcCDUnuV5qV5X3PfoIaBRG5gCKwKV2I9u70lI206V8w_oIxYda4YLLJBcWcXo2jQkKNTdqZItGoG5agy2IPmjpZyjIik4tym8--CWma6NE2uBK2cXhFSgPIZoE1R9pKlXoVfRFP6WAvdlS9Fy6cIrZxKmefUhzFe-_CygpHw6NoD_8HY2snqC8VhIRAMCCHOuwc_h4XA"
-              }
-            />
-            <div className="hidden sm:flex flex-col text-left">
-              <span className="font-body-semibold text-body-semibold text-text-strong">
-                {displayName}
-              </span>
-              <span className="font-caption text-caption text-text-secondary">
-                {displayRole}
-              </span>
-            </div>
-          </div>
+          {/* Interactive Profile Dropdown */}
+          <ProfileDropdown />
         </div>
       </div>
     </header>

@@ -45,8 +45,8 @@ export function RecentAnalysesTable() {
 
   useEffect(() => {
     let mounted = true;
-    const fetchData = async () => {
-      setLoading(true);
+    const fetchData = async (isSilent = false) => {
+      if (!isSilent) setLoading(true);
       try {
         const res = await fetch(`/api/dashboard/recent-analyses?filter=${activeTab}&page=${page}`);
         if (res.status === 401) {
@@ -56,22 +56,27 @@ export function RecentAnalysesTable() {
         if (!res.ok) throw new Error("Failed to fetch");
         const result = await res.json();
         if (mounted) {
-          setData(result.items);
+          setData(result.items || []);
           setTotalPages(result.totalPages || 1);
         }
       } catch (e) {
         console.error(e);
       } finally {
-        if (mounted) setLoading(false);
+        if (mounted && !isSilent) setLoading(false);
       }
     };
     
-    fetchData();
+    fetchData(false);
     
-    // Poll every 5s if we are viewing in_progress
+    // Poll relaxed every 15s in background only when tab is visible
     let interval: NodeJS.Timeout;
     if (activeTab === "in_progress" || activeTab === "all") {
-      interval = setInterval(fetchData, 5000);
+      interval = setInterval(() => {
+        if (typeof document !== "undefined" && document.visibilityState === "hidden") {
+          return;
+        }
+        fetchData(true);
+      }, 15000);
     }
     
     return () => {
@@ -92,10 +97,13 @@ export function RecentAnalysesTable() {
     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col shadow-sm overflow-hidden">
       <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
         <h2 className="text-lg font-semibold text-dime-navy dark:text-white">Recent Analyses</h2>
-        <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg">
+        <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg" role="tablist" aria-label="Analyses status filter">
           {tabs.map(tab => (
             <button
               key={tab.id}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === tab.id}
               onClick={() => { setActiveTab(tab.id); setPage(1); }}
               className={cn(
                 "px-3 py-1.5 text-[13px] font-medium rounded-md transition-colors",
@@ -194,16 +202,20 @@ export function RecentAnalysesTable() {
         </span>
         <div className="flex gap-2">
           <button 
+            type="button"
+            aria-label="Previous page"
             disabled={page === 1}
             onClick={() => setPage(p => Math.max(1, p - 1))}
-            className="p-1.5 rounded border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white dark:hover:bg-slate-800 bg-transparent transition-colors"
+            className="p-1.5 rounded border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white dark:hover:bg-slate-800 bg-transparent transition-colors cursor-pointer"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
           <button 
+            type="button"
+            aria-label="Next page"
             disabled={page === totalPages || totalPages === 0}
             onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-            className="p-1.5 rounded border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white dark:hover:bg-slate-800 bg-transparent transition-colors"
+            className="p-1.5 rounded border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-white dark:hover:bg-slate-800 bg-transparent transition-colors cursor-pointer"
           >
             <ChevronRight className="w-4 h-4" />
           </button>

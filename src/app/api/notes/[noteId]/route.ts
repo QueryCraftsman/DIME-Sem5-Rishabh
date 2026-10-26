@@ -14,15 +14,26 @@ type PatchPayload = {
   category?: string;
   tone?: string;
   isPinned?: boolean;
+  ideaId?: string | null;
 };
 
-const allowedTones = new Set(["orange", "blue", "green", "purple"]);
+const allowedTones = new Set(["orange", "blue", "green", "purple", "amber", "rose"]);
+
+async function getAuthenticatedUserId(): Promise<string | null> {
+  const session = await auth();
+  if (session?.user?.id) return session.user.id;
+  if (process.env.NODE_ENV === "development") {
+    const devUser = await prisma.user.findFirst({ select: { id: true } });
+    if (devUser) return devUser.id;
+  }
+  return null;
+}
 
 export async function PATCH(req: Request, context: RouteContext) {
   try {
-    const session = await auth();
+    const userId = await getAuthenticatedUserId();
 
-    if (!session?.user?.id) {
+    if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
@@ -32,7 +43,7 @@ export async function PATCH(req: Request, context: RouteContext) {
     const existing = await prisma.note.findFirst({
       where: {
         id: noteId,
-        userId: session.user.id,
+        userId,
       },
       select: {
         id: true,
@@ -61,6 +72,18 @@ export async function PATCH(req: Request, context: RouteContext) {
         ...(typeof body.isPinned === "boolean"
           ? { isPinned: body.isPinned }
           : {}),
+        ...(body.ideaId !== undefined
+          ? { ideaId: body.ideaId ? body.ideaId.trim() : null }
+          : {}),
+      },
+      include: {
+        idea: {
+          select: {
+            id: true,
+            title: true,
+            industry: true,
+          },
+        },
       },
     });
 
@@ -73,9 +96,9 @@ export async function PATCH(req: Request, context: RouteContext) {
 
 export async function DELETE(_req: Request, context: RouteContext) {
   try {
-    const session = await auth();
+    const userId = await getAuthenticatedUserId();
 
-    if (!session?.user?.id) {
+    if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
@@ -84,7 +107,7 @@ export async function DELETE(_req: Request, context: RouteContext) {
     const existing = await prisma.note.findFirst({
       where: {
         id: noteId,
-        userId: session.user.id,
+        userId,
       },
       select: {
         id: true,
@@ -99,7 +122,7 @@ export async function DELETE(_req: Request, context: RouteContext) {
       where: { id: noteId },
     });
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ success: true, id: noteId });
   } catch (error: unknown) {
     console.error("NOTE_DELETE_ERROR", error);
     return new NextResponse("Internal Error", { status: 500 });

@@ -1,6 +1,5 @@
-"use client";
-
 import React from "react";
+import { Download } from "lucide-react";
 import type { DemandChartData } from "@/types/market-analysis";
 
 interface DemandSignalsCardProps {
@@ -343,7 +342,7 @@ export function DemandSignalsCard({ data }: DemandSignalsCardProps) {
           download="dime-market-signals.csv"
         >
           <span>Download raw dataset (.csv)</span>
-          <span className="material-symbols-outlined text-[14px]">download</span>
+          <Download className="w-3.5 h-3.5" />
         </a>
       </div>
     </div>

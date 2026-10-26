@@ -2,29 +2,45 @@
 
 import React from "react";
 import Link from "next/link";
+import { ChevronRight, TrendingUp, ExternalLink } from "lucide-react";
 
 export default function ResearchPage() {
   return (
     <div className="p-8 max-w-[1600px] w-full">
       <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-text-secondary font-label-md text-label-md mb-3">
         <Link href="/dashboard" className="hover:text-text-strong transition-colors">Dashboard</Link>
-        <span className="material-symbols-outlined text-[16px] text-text-muted">chevron_right</span>
+        <ChevronRight className="w-4 h-4 text-text-muted" />
         <span className="text-text-strong font-body-semibold text-body-semibold">Research &amp; Evidence</span>
       </nav>
 
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
         <div>
           <h1 className="font-headline-lg text-headline-lg text-text-strong">Research &amp; Evidence Corpus</h1>
           <p className="font-body-md text-body-md text-text-secondary mt-1">
             Verified academic literature, open-source repositories, and candidate forums with zero-hallucination provenance.
           </p>
         </div>
-        <Link
-          href="/market-analysis"
-          className="h-10 px-4 rounded-lg bg-primary hover:bg-brand-hover text-white font-body-semibold text-body-semibold flex items-center gap-2 transition-colors shadow-sm"
-        >
-          <span className="material-symbols-outlined text-[18px]">insights</span>
-          <span>View Market Signals</span>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/ideas"
+            className="h-10 px-4 rounded-lg border border-border-default hover:bg-canvas-bg text-text-strong font-body-semibold text-xs flex items-center gap-1.5 transition-colors shadow-sm"
+          >
+            <span>My Ideas Workspace</span>
+          </Link>
+          <Link
+            href="/market-analysis"
+            className="h-10 px-4 rounded-lg bg-primary hover:bg-brand-hover text-white font-body-semibold text-xs flex items-center gap-1.5 transition-colors shadow-sm"
+          >
+            <TrendingUp className="w-4 h-4" />
+            <span>View Market Signals</span>
+          </Link>
+        </div>
+      </div>
+
+      <div className="mb-6 p-4 rounded-xl bg-violet-50/50 dark:bg-violet-950/20 border border-violet-200 dark:border-violet-800/40 flex items-center justify-between text-xs text-text-secondary">
+        <span>Research papers and citations are indexed contextually for each idea. Open any idea from <strong>My Ideas</strong> to inspect its papers, citations, and relevance scores.</span>
+        <Link href="/ideas" className="text-primary font-bold hover:underline shrink-0 ml-4">
+          Select an Idea →
         </Link>
       </div>
 
@@ -51,7 +67,7 @@ export default function ResearchPage() {
             className="h-9 px-3 rounded-lg border border-border-default hover:bg-canvas-bg text-text-strong text-xs font-semibold flex items-center gap-1.5 shrink-0"
           >
             <span>Open Paper</span>
-            <span className="material-symbols-outlined text-[14px]">open_in_new</span>
+            <ExternalLink className="w-3.5 h-3.5" />
           </a>
         </div>
 
@@ -77,7 +93,7 @@ export default function ResearchPage() {
             className="h-9 px-3 rounded-lg border border-border-default hover:bg-canvas-bg text-text-strong text-xs font-semibold flex items-center gap-1.5 shrink-0"
           >
             <span>View Repo</span>
-            <span className="material-symbols-outlined text-[14px]">open_in_new</span>
+            <ExternalLink className="w-3.5 h-3.5" />
           </a>
         </div>
       </div>

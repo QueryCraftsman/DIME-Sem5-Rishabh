@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
-import { auth } from "../../../../../auth";
+import { getAuthenticatedUserId } from "@/lib/server-auth";
 import { prisma } from "../../../../../lib/prisma";
 
 const PAGE_SIZE = 5;
 
 export async function GET(req: Request) {
   try {
-    const session = await auth();
+    const userId = await getAuthenticatedUserId();
 
-    if (!session?.user?.id) {
+    if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
@@ -16,7 +16,7 @@ export async function GET(req: Request) {
     const filter = url.searchParams.get("filter") || "all";
     const page = parseInt(url.searchParams.get("page") || "1", 10);
 
-    const whereClause: any = { userId: session.user.id };
+    const whereClause: any = { userId };
     
     if (filter === "completed") {
       whereClause.status = { in: ["VALIDATED", "REJECTED", "COMPLETED"] };
@@ -33,7 +33,17 @@ export async function GET(req: Request) {
         orderBy: { updatedAt: "desc" },
         take: PAGE_SIZE,
         skip: (page - 1) * PAGE_SIZE,
-      })
+        select: {
+          id: true,
+          title: true,
+          status: true,
+          innovationScore: true,
+          marketDemand: true,
+          competitionLevel: true,
+          feasibilityScore: true,
+          updatedAt: true,
+        },
+      }),
     ]);
 
     const ideaIds = ideas.map(i => i.id);

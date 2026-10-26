@@ -1,6 +1,5 @@
-"use client";
-
 import React from "react";
+import { MousePointerClick } from "lucide-react";
 import type { PainPointRankingItem } from "@/types/market-analysis";
 
 interface PainPointsRankingProps {
@@ -26,9 +25,7 @@ export function PainPointsRanking({
           </p>
         </div>
         <span className="text-xs text-primary font-semibold flex items-center gap-1 mt-2 sm:mt-0">
-          <span className="material-symbols-outlined text-[16px]">
-            touch_app
-          </span>
+          <MousePointerClick className="w-4 h-4" />
           Interactive Inspector
         </span>
       </div>

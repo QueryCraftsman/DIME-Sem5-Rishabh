@@ -3,49 +3,24 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { 
+  PanelLeftClose, 
+  LayoutDashboard, 
+  Sparkles, 
+  Lightbulb, 
+  Compass, 
+  StickyNote, 
+  Settings2 
+} from "lucide-react";
 import { DimeLogo } from "@/components/brand/DimeLogo";
 
 interface NavItem {
   label: string;
-  icon: string;
+  iconType: "dashboard" | "validate" | "ideas" | "matrix" | "notes" | "settings";
   href: string;
-  fillWhenActive?: boolean;
+  badge?: number | string;
 }
-
-const NAV_ITEMS: NavItem[] = [
-  {
-    label: "Dashboard",
-    icon: "space_dashboard",
-    href: "/dashboard",
-  },
-  {
-    label: "Validate Idea",
-    icon: "fact_check",
-    href: "/ideas/new",
-  },
-  {
-    label: "Market Intelligence",
-    icon: "insights",
-    href: "/market-analysis",
-    fillWhenActive: true,
-  },
-  {
-    label: "Competition",
-    icon: "leaderboard",
-    href: "/competition",
-  },
-  {
-    label: "Research & Evidence",
-    icon: "library_books",
-    href: "/research",
-  },
-  {
-    label: "Opportunity Matrix",
-    icon: "radar",
-    href: "/opportunity-matrix",
-  },
-];
 
 export function Sidebar({
   isOpen,
@@ -55,6 +30,7 @@ export function Sidebar({
   setIsOpen: (v: boolean) => void;
 }) {
   const pathname = usePathname();
+  const { data: session } = useSession();
   const [ideaCount, setIdeaCount] = useState<number>(12);
 
   useEffect(() => {
@@ -70,32 +46,117 @@ export function Sidebar({
       .catch(() => {});
   }, []);
 
-  const isItemActive = (itemHref: string) => {
-    if (itemHref === "/ideas/new") {
+  const isMainActive = (href: string) => {
+    if (href === "/dashboard") {
+      return pathname === "/dashboard";
+    }
+    if (href === "/ideas/new") {
       return (
         pathname === "/ideas/new" ||
         pathname.startsWith("/ideas/new/") ||
-        pathname.includes("/analysis")
+        pathname === "/validate" ||
+        pathname.startsWith("/validate/")
       );
     }
-    if (itemHref === "/market-analysis") {
+    if (href === "/ideas") {
       return (
-        pathname === "/market-analysis" ||
-        pathname.startsWith("/market-analysis/")
+        pathname === "/ideas" ||
+        (pathname.startsWith("/ideas/") && !pathname.startsWith("/ideas/new"))
       );
     }
-    return pathname === itemHref || pathname.startsWith(itemHref + "/");
+    return pathname === href || pathname.startsWith(href + "/");
   };
 
-  const isMyIdeasActive =
-    pathname === "/ideas" ||
-    (pathname.startsWith("/ideas/") &&
-      !pathname.startsWith("/ideas/new") &&
-      !pathname.includes("/analysis"));
+  const isWorkspaceActive = (href: string) => {
+    if (href === "/opportunity-matrix") {
+      return (
+        pathname === "/opportunity-matrix" ||
+        pathname.startsWith("/opportunity-matrix/") ||
+        pathname === "/opportunities" ||
+        pathname.startsWith("/opportunities/")
+      );
+    }
+    if (href === "/notes") {
+      return pathname === "/notes" || pathname.startsWith("/notes/");
+    }
+    return pathname === href || pathname.startsWith(href + "/");
+  };
 
-  const isNotesActive = pathname === "/notes" || pathname.startsWith("/notes/");
   const isSettingsActive =
     pathname === "/settings" || pathname.startsWith("/settings/");
+
+  const mainNavItems: NavItem[] = [
+    {
+      label: "Dashboard",
+      iconType: "dashboard",
+      href: "/dashboard",
+    },
+    {
+      label: "Validate Idea",
+      iconType: "validate",
+      href: "/ideas/new",
+    },
+    {
+      label: "My Ideas",
+      iconType: "ideas",
+      href: "/ideas",
+      badge: ideaCount,
+    },
+  ];
+
+  const workspaceNavItems: NavItem[] = [
+    {
+      label: "Opportunity Matrix",
+      iconType: "matrix",
+      href: "/opportunity-matrix",
+    },
+    {
+      label: "Notes",
+      iconType: "notes",
+      href: "/notes",
+    },
+  ];
+
+  const renderNavIcon = (iconType: NavItem["iconType"], active: boolean) => {
+    const getIcon = () => {
+      switch (iconType) {
+        case "dashboard":
+          return <LayoutDashboard className="w-4 h-4" />;
+        case "validate":
+          return <Sparkles className="w-4 h-4" />;
+        case "ideas":
+          return <Lightbulb className="w-4 h-4" />;
+        case "matrix":
+          return <Compass className="w-4 h-4" />;
+        case "notes":
+          return <StickyNote className="w-4 h-4" />;
+        case "settings":
+          return <Settings2 className="w-4 h-4" />;
+        default:
+          return <LayoutDashboard className="w-4 h-4" />;
+      }
+    };
+
+    return (
+      <div
+        className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-200 shrink-0 ${
+          active
+            ? "bg-white/20 text-white shadow-xs"
+            : "bg-[#EFEAE2]/60 dark:bg-[#201E1B] text-[#776E65] dark:text-[#9A9085] group-hover:text-[#171717] dark:group-hover:text-[#F4F0E9] group-hover:bg-white dark:group-hover:bg-[#26231F] border border-transparent group-hover:border-[#E8E1D8] dark:group-hover:border-[#34302B] group-hover:shadow-xs group-hover:scale-105"
+        }`}
+      >
+        {getIcon()}
+      </div>
+    );
+  };
+
+  const displayName = session?.user?.name || "Vivek Chaurasiya";
+  const userInitials = displayName
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 
   return (
     <>
@@ -110,14 +171,14 @@ export function Sidebar({
       {/* SIDE NAVIGATION BAR (268px expanded / 72px collapsed icon rail) */}
       <aside
         id="app-sidebar"
-        className={`fixed lg:static inset-y-0 left-0 z-40 h-full shrink-0 bg-surface-white border-r border-border-default flex flex-col justify-between overflow-y-auto overflow-x-hidden no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden transition-[width,padding] duration-300 ease-in-out ${
+        className={`fixed lg:static inset-y-0 left-0 z-40 h-full shrink-0 bg-[#F8F5F0] dark:bg-[#1A1816] border-r border-[#E8E1D8] dark:border-[#2E2A25] flex flex-col justify-between overflow-y-auto overflow-x-hidden no-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden transition-[width,padding,transform] duration-300 ease-in-out ${
           isOpen
             ? "w-[268px] p-4 translate-x-0"
             : "w-[72px] py-4 px-2 -translate-x-full lg:translate-x-0"
         }`}
       >
-        {/* Top Section: Brand & Primary CTA */}
-        <div className="flex flex-col gap-3.5">
+        {/* Top Section: Brand & Primary Navigation */}
+        <div className="flex flex-col gap-3">
           {/* Brand Header & Toggle Button */}
           <div
             className={`h-10 flex items-center ${
@@ -134,23 +195,23 @@ export function Sidebar({
               </Link>
               {isOpen && (
                 <div className="flex flex-col min-w-0">
-                  <span className="text-[18px] font-black tracking-tight text-text-strong leading-none">
+                  <span className="text-[18px] font-black tracking-tight text-[#171717] dark:text-[#F4F0E9] leading-none">
                     DIME
                   </span>
-                  <span className="text-[11px] font-medium text-text-secondary leading-tight mt-0.5">
+                  <span className="text-[11px] font-medium text-[#898078] dark:text-[#9A9085] leading-tight mt-0.5">
                     Product Intelligence
                   </span>
                 </div>
               )}
             </div>
 
-            {/* 21st.dev / shadcn style Sidebar Toggle Button (shown only when expanded; when collapsed, button moves to navbar) */}
+            {/* Sidebar Toggle Button (shown when expanded) */}
             {isOpen && (
               <button
                 type="button"
                 id="sidebar-toggle-btn"
                 onClick={() => setIsOpen(false)}
-                className="h-8 w-8 rounded-lg border border-border-default bg-surface-white hover:bg-canvas-bg hover:border-slate-300 text-text-secondary hover:text-text-strong shadow-[0_1px_2px_rgba(0,0,0,0.05)] active:scale-90 transition-all duration-150 shrink-0 flex items-center justify-center cursor-pointer group"
+                className="h-8 w-8 rounded-lg border border-[#E8E1D8] dark:border-[#34302B] bg-[#FDFBF8] dark:bg-[#201E1B] hover:bg-[#EFEAE2] dark:hover:bg-[#26231F] text-[#776E65] dark:text-[#C1B8AD] hover:text-[#171717] dark:hover:text-[#F4F0E9] shadow-xs active:scale-95 transition-all duration-150 shrink-0 flex items-center justify-center cursor-pointer group"
                 title="Collapse sidebar"
                 aria-label="Collapse sidebar"
               >
@@ -159,10 +220,15 @@ export function Sidebar({
             )}
           </div>
 
-          {/* Main Navigation Links - positioned lower for balanced visual rhythm and seamless alignment */}
-          <nav className="mt-5 flex flex-col gap-1">
-            {NAV_ITEMS.map((item) => {
-              const active = isItemActive(item.href);
+          {/* MAIN Section */}
+          <div className="mt-4 flex flex-col gap-1">
+            {isOpen && (
+              <div className="px-3 pb-1 text-[11px] font-bold text-[#898078] dark:text-[#9A9085] uppercase tracking-wider">
+                Main
+              </div>
+            )}
+            {mainNavItems.map((item) => {
+              const active = isMainActive(item.href);
               return (
                 <Link
                   key={item.href}
@@ -171,153 +237,120 @@ export function Sidebar({
                     if (window.innerWidth < 1024) setIsOpen(false);
                   }}
                   title={!isOpen ? item.label : undefined}
-                  className={`group relative flex items-center rounded-lg transition-colors ${
+                  className={`group relative flex items-center rounded-xl transition-all duration-150 ${
                     isOpen
-                      ? "gap-3 px-3 py-2"
+                      ? "justify-between px-3 py-2"
                       : "w-10 h-10 mx-auto justify-center"
                   } ${
                     active
-                      ? "bg-primary text-on-primary font-body-semibold text-body-semibold shadow-sm"
-                      : "text-text-secondary font-label-md text-label-md hover:bg-canvas-bg hover:text-text-strong"
+                      ? "bg-primary text-white font-semibold shadow-xs shadow-orange-500/20"
+                      : "text-[#514B45] dark:text-[#C1B8AD] font-medium hover:bg-[#EFEAE2] dark:hover:bg-[#26231F] hover:text-[#171717] dark:hover:text-[#F4F0E9]"
                   }`}
                 >
-                  <span
-                    className={`material-symbols-outlined text-[20px] shrink-0 ${
-                      active ? "text-white" : ""
-                    }`}
-                    style={
-                      active && item.fillWhenActive
-                        ? { fontVariationSettings: "'FILL' 1" }
-                        : undefined
-                    }
-                  >
-                    {item.icon}
-                  </span>
-                  {isOpen ? (
-                    <span className="truncate">{item.label}</span>
-                  ) : (
-                    /* Floating modern tooltip for icon-rail mode */
+                  <div className={`flex items-center ${isOpen ? "gap-2.5" : "justify-center relative"}`}>
+                    {renderNavIcon(item.iconType, active)}
+                    {!isOpen && item.badge !== undefined && (
+                      <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-primary ring-2 ring-[#F8F5F0] dark:ring-[#1A1816]" />
+                    )}
+                    {isOpen && <span className="truncate">{item.label}</span>}
+                  </div>
+
+                  {isOpen && item.badge !== undefined && (
+                    <span
+                      className={`px-1.5 py-0.5 text-[11px] font-semibold rounded-md border ${
+                        active
+                          ? "bg-white/20 text-white border-white/30"
+                          : "bg-[#EFEAE2] dark:bg-[#26231F] text-[#514B45] dark:text-[#C1B8AD] border-[#E8E1D8] dark:border-[#34302B]"
+                      }`}
+                    >
+                      {item.badge}
+                    </span>
+                  )}
+
+                  {!isOpen && (
                     <span className="fixed pointer-events-none z-50 left-[76px] px-2.5 py-1 text-xs font-medium text-white bg-text-strong rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-150 whitespace-nowrap">
-                      {item.label}
+                      {item.label} {item.badge !== undefined ? `(${item.badge})` : ""}
                     </span>
                   )}
                 </Link>
               );
             })}
-          </nav>
+          </div>
 
-          {/* Workspace Links Section */}
-          <div className={`border-t border-border-default ${isOpen ? "pt-2.5" : "pt-2"}`}>
+          {/* WORKSPACE Section */}
+          <div className={`border-t border-[#E8E1D8]/80 dark:border-[#2E2A25] ${isOpen ? "pt-2.5" : "pt-2"}`}>
             {isOpen ? (
-              <div className="px-3 pb-1.5 text-[11px] font-semibold text-text-muted uppercase tracking-wider">
+              <div className="px-3 pb-1 text-[11px] font-bold text-[#898078] dark:text-[#9A9085] uppercase tracking-wider">
                 Workspace
               </div>
             ) : (
-              <div className="w-8 h-px bg-border-default mx-auto mb-2" />
+              <div className="w-8 h-px bg-[#E8E1D8] dark:bg-[#2E2A25] mx-auto mb-2" />
             )}
             <div className="flex flex-col gap-1">
-              <Link
-                href="/ideas"
-                onClick={() => {
-                  if (window.innerWidth < 1024) setIsOpen(false);
-                }}
-                title={!isOpen ? `My Ideas (${ideaCount})` : undefined}
-                className={`group relative flex items-center rounded-lg transition-colors ${
-                  isOpen
-                    ? "justify-between px-3 py-2"
-                    : "w-10 h-10 mx-auto justify-center"
-                } ${
-                  isMyIdeasActive
-                    ? "bg-primary text-on-primary font-body-semibold text-body-semibold shadow-sm"
-                    : "text-text-secondary font-label-md text-label-md hover:bg-canvas-bg hover:text-text-strong"
-                }`}
-              >
-                <div
-                  className={`flex items-center ${
-                    isOpen ? "gap-3" : "justify-center relative"
-                  }`}
-                >
-                  <span className="material-symbols-outlined text-[18px]">
-                    lightbulb
-                  </span>
-                  {!isOpen && (
-                    <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-primary ring-2 ring-white" />
-                  )}
-                  {isOpen && <span>My Ideas</span>}
-                </div>
-                {isOpen ? (
-                  <span
-                    className={`px-1.5 py-0.5 text-[11px] font-semibold rounded border ${
-                      isMyIdeasActive
-                        ? "bg-white/20 text-white border-white/30"
-                        : "bg-canvas-bg text-text-secondary border-border-default"
+              {workspaceNavItems.map((item) => {
+                const active = isWorkspaceActive(item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => {
+                      if (window.innerWidth < 1024) setIsOpen(false);
+                    }}
+                    title={!isOpen ? item.label : undefined}
+                    className={`group relative flex items-center rounded-xl transition-all duration-150 ${
+                      isOpen
+                        ? "gap-2.5 px-3 py-2"
+                        : "w-10 h-10 mx-auto justify-center"
+                    } ${
+                      active
+                        ? "bg-primary text-white font-semibold shadow-xs shadow-orange-500/20"
+                        : "text-[#514B45] dark:text-[#C1B8AD] font-medium hover:bg-[#EFEAE2] dark:hover:bg-[#26231F] hover:text-[#171717] dark:hover:text-[#F4F0E9]"
                     }`}
                   >
-                    {ideaCount}
-                  </span>
-                ) : (
-                  <span className="fixed pointer-events-none z-50 left-[76px] px-2.5 py-1 text-xs font-medium text-white bg-text-strong rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-150 whitespace-nowrap">
-                    My Ideas ({ideaCount})
-                  </span>
-                )}
-              </Link>
-
-              <Link
-                href="/notes"
-                onClick={() => {
-                  if (window.innerWidth < 1024) setIsOpen(false);
-                }}
-                title={!isOpen ? "Notes" : undefined}
-                className={`group relative flex items-center rounded-lg transition-colors ${
-                  isOpen
-                    ? "gap-3 px-3 py-2"
-                    : "w-10 h-10 mx-auto justify-center"
-                } ${
-                  isNotesActive
-                    ? "bg-primary text-on-primary font-body-semibold text-body-semibold shadow-sm"
-                    : "text-text-secondary font-label-md text-label-md hover:bg-canvas-bg hover:text-text-strong"
-                }`}
-              >
-                <span className="material-symbols-outlined text-[18px]">
-                  note_stack
-                </span>
-                {isOpen ? (
-                  <span>Notes</span>
-                ) : (
-                  <span className="fixed pointer-events-none z-50 left-[76px] px-2.5 py-1 text-xs font-medium text-white bg-text-strong rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-150 whitespace-nowrap">
-                    Notes
-                  </span>
-                )}
-              </Link>
+                    {renderNavIcon(item.iconType, active)}
+                    {isOpen ? (
+                      <span className="truncate">{item.label}</span>
+                    ) : (
+                      <span className="fixed pointer-events-none z-50 left-[76px] px-2.5 py-1 text-xs font-medium text-white bg-text-strong rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-150 whitespace-nowrap">
+                        {item.label}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
             </div>
           </div>
         </div>
 
-        {/* Bottom Profile / Settings Footer */}
+        {/* Bottom SYSTEM / SETTINGS & FOOTER Section */}
         <div
-          className={`border-t border-border-default flex flex-col gap-1 ${
+          className={`border-t border-[#E8E1D8]/80 dark:border-[#2E2A25] flex flex-col gap-1.5 ${
             isOpen ? "pt-2.5" : "pt-2"
           }`}
         >
+          {isOpen && (
+            <div className="px-3 pb-0.5 text-[11px] font-bold text-[#898078] dark:text-[#9A9085] uppercase tracking-wider">
+              System
+            </div>
+          )}
+
           <Link
             href="/settings"
             onClick={() => {
               if (window.innerWidth < 1024) setIsOpen(false);
             }}
             title={!isOpen ? "Settings" : undefined}
-            className={`group relative flex items-center rounded-lg transition-colors ${
+            className={`group relative flex items-center rounded-xl transition-all duration-150 ${
               isOpen
-                ? "gap-3 px-3 py-2"
+                ? "gap-2.5 px-3 py-2"
                 : "w-10 h-10 mx-auto justify-center"
             } ${
               isSettingsActive
-                ? "bg-primary text-on-primary font-body-semibold text-body-semibold shadow-sm"
-                : "text-text-secondary font-label-md text-label-md hover:bg-canvas-bg hover:text-text-strong"
+                ? "bg-primary text-white font-semibold shadow-xs shadow-orange-500/20"
+                : "text-[#514B45] dark:text-[#C1B8AD] font-medium hover:bg-[#EFEAE2] dark:hover:bg-[#26231F] hover:text-[#171717] dark:hover:text-[#F4F0E9]"
             }`}
           >
-            <span className="material-symbols-outlined text-[18px]">
-              settings
-            </span>
+            {renderNavIcon("settings", isSettingsActive)}
             {isOpen ? (
               <span>Settings</span>
             ) : (
@@ -327,29 +360,57 @@ export function Sidebar({
             )}
           </Link>
 
+          {/* Credit Balance */}
           {isOpen ? (
-            <div className="mt-1.5 p-2 rounded-lg bg-canvas-bg border border-border-default flex items-center justify-between">
+            <div className="mt-1 p-2.5 rounded-xl bg-[#FDFBF8] dark:bg-[#201E1B] border border-[#E8E1D8] dark:border-[#34302B] flex items-center justify-between shadow-xs">
               <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                <span className="font-caption text-caption text-text-secondary">
+                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="text-xs font-medium text-[#69645F] dark:text-[#9A9085]">
                   Credit Balance
                 </span>
               </div>
-              <span className="font-body-semibold text-body-semibold text-text-strong">
+              <span className="font-bold text-xs sm:text-sm text-[#171717] dark:text-[#F4F0E9]">
                 4,850 ops
               </span>
             </div>
           ) : (
             <div
               title="Credit Balance: 4,850 ops"
-              className="mt-1.5 w-10 h-10 mx-auto rounded-lg bg-canvas-bg border border-border-default flex flex-col items-center justify-center gap-0.5 cursor-default group relative"
+              className="mt-1 w-10 h-10 mx-auto rounded-xl bg-[#FDFBF8] dark:bg-[#201E1B] border border-[#E8E1D8] dark:border-[#34302B] flex flex-col items-center justify-center gap-0.5 cursor-default group relative shadow-xs"
             >
               <div className="w-2 h-2 rounded-full bg-emerald-500" />
-              <span className="text-[9px] font-bold text-text-strong tracking-tighter leading-none">
+              <span className="text-[9px] font-bold text-[#171717] dark:text-[#F4F0E9] tracking-tighter leading-none">
                 4.8k
               </span>
               <span className="fixed pointer-events-none z-50 left-[76px] px-2.5 py-1 text-xs font-medium text-white bg-text-strong rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-150 whitespace-nowrap">
                 Credit: 4,850 ops
+              </span>
+            </div>
+          )}
+
+          {/* User Profile Footer */}
+          {isOpen ? (
+            <div className="mt-1 pt-2.5 border-t border-[#E8E1D8] dark:border-[#2E2A25] flex items-center gap-2.5 px-1">
+              <div className="w-8 h-8 rounded-full bg-orange-100 dark:bg-[#2D1A10] text-primary dark:text-[#F97316] font-bold text-xs flex items-center justify-center shrink-0 border border-orange-200/80 dark:border-orange-900/40 shadow-xs">
+                {userInitials}
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="text-xs font-bold text-[#171717] dark:text-[#F4F0E9] truncate">
+                  {displayName}
+                </span>
+                <span className="text-[10px] text-[#898078] dark:text-[#9A9085] truncate max-w-[170px]">
+                  {session?.user?.email || "vivekchaurasiya943@gmail.com"}
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div
+              title={displayName}
+              className="mt-1 w-8 h-8 mx-auto rounded-full bg-orange-100 dark:bg-[#2D1A10] text-primary dark:text-[#F97316] font-bold text-xs flex items-center justify-center shrink-0 border border-orange-200/80 dark:border-orange-900/40 shadow-xs cursor-default group relative"
+            >
+              {userInitials}
+              <span className="fixed pointer-events-none z-50 left-[76px] px-2.5 py-1 text-xs font-medium text-white bg-text-strong rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-150 whitespace-nowrap">
+                {displayName}
               </span>
             </div>
           )}

@@ -2,6 +2,8 @@
 
 import React from "react";
 import Link from "next/link";
+import { ChevronRight, RefreshCw, Download } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { MarketIntelligenceIdea } from "@/types/market-analysis";
 
 interface MarketHeaderProps {
@@ -27,18 +29,14 @@ export function MarketHeader({
         <Link href="/ideas" className="hover:text-text-strong transition-colors">
           My Ideas
         </Link>
-        <span className="material-symbols-outlined text-[16px] text-text-muted">
-          chevron_right
-        </span>
+        <ChevronRight className="w-4 h-4 text-text-muted" />
         <Link
           href={`/ideas/${idea.id}`}
           className="hover:text-text-strong transition-colors"
         >
           {idea.title}
         </Link>
-        <span className="material-symbols-outlined text-[16px] text-text-muted">
-          chevron_right
-        </span>
+        <ChevronRight className="w-4 h-4 text-text-muted" />
         <span className="text-text-strong font-body-semibold text-body-semibold">
           Market Intelligence
         </span>
@@ -74,13 +72,7 @@ export function MarketHeader({
             className="h-10 px-4 rounded-lg bg-surface-white border border-border-default hover:bg-canvas-bg text-text-strong font-body-semibold text-body-semibold flex items-center gap-2 transition-colors disabled:opacity-60 cursor-pointer"
             type="button"
           >
-            <span
-              className={`material-symbols-outlined text-[18px] ${
-                isRefreshing ? "animate-spin" : ""
-              }`}
-            >
-              refresh
-            </span>
+            <RefreshCw className={cn("w-4 h-4", isRefreshing && "animate-spin")} />
             <span>{isRefreshing ? "Refreshing..." : "Refresh Data"}</span>
           </button>
 
@@ -89,9 +81,7 @@ export function MarketHeader({
             className="h-10 px-4 rounded-lg bg-primary hover:bg-brand-hover text-white font-body-semibold text-body-semibold flex items-center gap-2 transition-colors shadow-sm cursor-pointer"
             type="button"
           >
-            <span className="material-symbols-outlined text-[18px]">
-              file_download
-            </span>
+            <Download className="w-4 h-4" />
             <span>Export Market Signals</span>
           </button>
         </div>

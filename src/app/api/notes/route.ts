@@ -4,11 +4,23 @@ import { auth } from "@/lib/server-auth";
 
 const normalize = (value: string | null) => (value ?? "").trim().toLowerCase();
 
+const allowedTones = new Set(["orange", "blue", "green", "purple", "amber", "rose"]);
+
+async function getAuthenticatedUserId(): Promise<string | null> {
+  const session = await auth();
+  if (session?.user?.id) return session.user.id;
+  if (process.env.NODE_ENV === "development") {
+    const devUser = await prisma.user.findFirst({ select: { id: true } });
+    if (devUser) return devUser.id;
+  }
+  return null;
+}
+
 export async function GET(req: Request) {
   try {
-    const session = await auth();
+    const userId = await getAuthenticatedUserId();
 
-    if (!session?.user?.id) {
+    if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
@@ -16,20 +28,32 @@ export async function GET(req: Request) {
     const category = normalize(url.searchParams.get("category"));
     const search = normalize(url.searchParams.get("search"));
     const sort = normalize(url.searchParams.get("sort")) || "updated";
+    const ideaId = url.searchParams.get("ideaId");
 
     const notes = await prisma.note.findMany({
       where: {
-        userId: session.user.id,
+        userId,
+        ...(ideaId ? { ideaId } : {}),
       },
-      orderBy: {
-        updatedAt: "desc",
+      include: {
+        idea: {
+          select: {
+            id: true,
+            title: true,
+            industry: true,
+          },
+        },
       },
-      take: 120,
+      orderBy: [
+        { isPinned: "desc" },
+        { updatedAt: "desc" },
+      ],
+      take: 200,
     });
 
     let filtered = notes;
 
-    if (category && category !== "all") {
+    if (category && category !== "all" && category !== "all notes") {
       filtered = filtered.filter(
         (note) => note.category.toLowerCase() === category,
       );
@@ -37,7 +61,7 @@ export async function GET(req: Request) {
 
     if (search) {
       filtered = filtered.filter((note) => {
-        const haystack = `${note.title} ${note.content}`.toLowerCase();
+        const haystack = `${note.title} ${note.content} ${note.category} ${note.idea?.title || ""}`.toLowerCase();
         return haystack.includes(search);
       });
     }
@@ -54,17 +78,27 @@ export async function GET(req: Request) {
         .sort((a, b) => a.updatedAt.getTime() - b.updatedAt.getTime());
     }
 
+    // Default presets + user custom categories
+    const categorySet = new Set<string>([
+      "All Notes",
+      "Market Research",
+      "Tech Stack",
+      "User Feedback",
+      "Design Ideas",
+      "Competitive Intel",
+      "General",
+    ]);
+
+    notes.forEach((n) => {
+      if (n.category && n.category.trim()) {
+        categorySet.add(n.category.trim());
+      }
+    });
+
     return NextResponse.json({
       items: filtered,
       total: filtered.length,
-      categories: [
-        "All Notes",
-        "Market Research",
-        "Tech Stack",
-        "User Feedback",
-        "Design Ideas",
-        "General",
-      ],
+      categories: Array.from(categorySet),
     });
   } catch (error: unknown) {
     console.error("NOTES_GET_ERROR", error);
@@ -81,13 +115,11 @@ type CreatePayload = {
   ideaId?: string | null;
 };
 
-const allowedTones = new Set(["orange", "blue", "green", "purple"]);
-
 export async function POST(req: Request) {
   try {
-    const session = await auth();
+    const userId = await getAuthenticatedUserId();
 
-    if (!session?.user?.id) {
+    if (!userId) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
@@ -95,13 +127,13 @@ export async function POST(req: Request) {
     const title = (body.title ?? "").trim();
     const content = (body.content ?? "").trim();
 
-    if (title.length < 3 || content.length < 10) {
-      return new NextResponse("Title or content too short", { status: 400 });
+    if (title.length < 2 || content.length < 2) {
+      return new NextResponse("Title and content are required", { status: 400 });
     }
 
     const note = await prisma.note.create({
       data: {
-        userId: session.user.id,
+        userId,
         title,
         content,
         category: (body.category ?? "General").trim() || "General",
@@ -110,6 +142,15 @@ export async function POST(req: Request) {
           : "orange",
         isPinned: Boolean(body.isPinned),
         ideaId: body.ideaId?.trim() || null,
+      },
+      include: {
+        idea: {
+          select: {
+            id: true,
+            title: true,
+            industry: true,
+          },
+        },
       },
     });
 

@@ -30,9 +30,9 @@ export default function AnalysisPipeline({ stage, status, progress }: PipelinePr
   const isCompleted = status === "COMPLETED" || status === "completed";
 
   return (
-    <div className="p-6 flex flex-col h-full bg-white">
-      <h2 className="text-lg font-semibold text-slate-900 mb-2">Analysis Pipeline</h2>
-      <p className="text-xs text-slate-400 mb-6">
+    <div className="p-6 flex flex-col h-full bg-white dark:bg-[#201E1B]">
+      <h2 className="text-lg font-semibold text-slate-900 dark:text-[#F4F0E9] mb-2">Analysis Pipeline</h2>
+      <p className="text-xs text-slate-400 dark:text-[#9A9085] mb-6">
         {isCompleted
           ? "Analysis complete"
           : isFailed
@@ -42,7 +42,7 @@ export default function AnalysisPipeline({ stage, status, progress }: PipelinePr
 
       <div className="flex-1 relative">
         {/* Vertical line connecting steps */}
-        <div className="absolute left-[15px] top-4 bottom-4 w-0.5 bg-slate-100 z-0"></div>
+        <div className="absolute left-[15px] top-4 bottom-4 w-0.5 bg-slate-100 dark:bg-[#34302B] z-0"></div>
 
         <ul className="relative z-10 space-y-6">
           {STAGES.map((s, idx) => {
@@ -51,26 +51,26 @@ export default function AnalysisPipeline({ stage, status, progress }: PipelinePr
             const stepFailed = isFailed && idx === currentIndex;
 
             let Icon = Circle;
-            let iconColor = "text-slate-300";
-            let textColor = "text-slate-500";
+            let iconColor = "text-slate-300 dark:text-slate-600";
+            let textColor = "text-slate-500 dark:text-[#9A9085]";
 
             if (stepCompleted) {
               Icon = CheckCircle2;
-              iconColor = "text-green-500";
-              textColor = "text-slate-900";
+              iconColor = "text-green-500 dark:text-green-400";
+              textColor = "text-slate-900 dark:text-[#F4F0E9]";
             } else if (stepFailed) {
               Icon = XCircle;
-              iconColor = "text-red-500";
-              textColor = "text-red-700 font-medium";
+              iconColor = "text-red-500 dark:text-red-400";
+              textColor = "text-red-700 dark:text-red-400 font-medium";
             } else if (isCurrent) {
               Icon = Loader2;
-              iconColor = "text-purple-500 animate-spin";
-              textColor = "text-purple-700 font-medium";
+              iconColor = "text-purple-500 dark:text-purple-400 animate-spin";
+              textColor = "text-purple-700 dark:text-purple-300 font-medium";
             }
 
             return (
               <li key={s.id} className="flex items-start gap-4">
-                <div className="mt-0.5 bg-white rounded-full">
+                <div className="mt-0.5 bg-white dark:bg-[#201E1B] rounded-full">
                   <Icon className={`w-7 h-7 ${iconColor}`} />
                 </div>
                 <div className="flex-1">
@@ -78,7 +78,7 @@ export default function AnalysisPipeline({ stage, status, progress }: PipelinePr
                     {s.label}
                   </span>
                   {isCurrent && (
-                    <div className="mt-2 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                    <div className="mt-2 h-1.5 w-full bg-slate-100 dark:bg-[#34302B] rounded-full overflow-hidden">
                       <div
                         className="h-full bg-purple-500 transition-all duration-500 ease-out rounded-full"
                         style={{ width: `${progress}%` }}

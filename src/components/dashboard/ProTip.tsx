@@ -17,9 +17,9 @@ export function ProTip({ insight, isLoading }: { insight?: string; isLoading: bo
     <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-500/20 rounded-xl p-4 flex gap-3">
       <Lightbulb className="w-5 h-5 text-dime-orange shrink-0 mt-0.5" />
       <div>
-        <h4 className="text-[13px] font-bold text-orange-900 dark:text-orange-300 mb-0.5 uppercase tracking-wider">
+        <h3 className="text-[13px] font-bold text-orange-900 dark:text-orange-300 mb-0.5 uppercase tracking-wider">
           Quick Insight
-        </h4>
+        </h3>
         <p className="text-[14px] text-orange-800 dark:text-orange-200 leading-snug">
           {insight}
         </p>

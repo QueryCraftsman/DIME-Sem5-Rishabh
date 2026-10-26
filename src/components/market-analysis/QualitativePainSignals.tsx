@@ -1,6 +1,5 @@
-"use client";
-
 import React from "react";
+import { Quote } from "lucide-react";
 import type { QualitativePainSignal } from "@/types/market-analysis";
 
 interface QualitativePainSignalsProps {
@@ -59,9 +58,7 @@ export function QualitativePainSignals({ signals }: QualitativePainSignalsProps)
 
             <div className="mt-3 pt-3 border-t border-border-default bg-canvas-bg -mx-4 -mb-4 p-3 rounded-b-xl">
               <div className="flex items-start gap-1.5 text-xs text-text-secondary italic">
-                <span className="material-symbols-outlined text-[14px] text-text-muted shrink-0 mt-0.5">
-                  format_quote
-                </span>
+                <Quote className="w-3.5 h-3.5 text-text-muted shrink-0 mt-0.5" />
                 <p className="line-clamp-2">{signal.representativeQuote}</p>
               </div>
             </div>
