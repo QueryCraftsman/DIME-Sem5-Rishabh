@@ -34,14 +34,14 @@ export default function AuthenticatedLayout({
   }, []);
 
   return (
-    <div className="flex h-screen bg-canvas-bg text-text-strong font-body-md overflow-hidden antialiased">
+    <div className="flex h-screen app-bg-gradient text-text-strong font-body-md overflow-hidden antialiased">
       <Sidebar isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
         <TopNavbar
           toggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
           isSidebarOpen={isSidebarOpen}
         />
-        <main className="flex-1 overflow-y-auto overflow-x-hidden">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden min-w-0">
           {children}
         </main>
       </div>

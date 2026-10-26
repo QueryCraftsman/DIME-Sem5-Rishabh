@@ -28,7 +28,7 @@ export default function DashboardPage() {
       try {
         const res = await fetch("/api/dashboard/overview");
         if (res.status === 401) {
-          clearInterval(interval);
+          if (interval) clearInterval(interval);
           return;
         }
         if (!res.ok) throw new Error("Failed to fetch dashboard data");
@@ -44,11 +44,33 @@ export default function DashboardPage() {
     };
     fetchDashboard();
     
-    // Poll every 10s
-    const interval = setInterval(fetchDashboard, 10000);
+    // Poll every 30s only when tab is visible
+    let interval: NodeJS.Timeout;
+    const startInterval = () => {
+      if (interval) clearInterval(interval);
+      interval = setInterval(() => {
+        if (typeof document !== "undefined" && document.visibilityState === "hidden") {
+          return;
+        }
+        fetchDashboard();
+      }, 30000);
+    };
+
+    startInterval();
+
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        fetchDashboard();
+        startInterval();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibility);
+
     return () => {
       mounted = false;
-      clearInterval(interval);
+      if (interval) clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibility);
     };
   }, []);
 
@@ -65,7 +87,7 @@ export default function DashboardPage() {
           </p>
         </div>
         <Link 
-          href="/analyze" 
+          href="/ideas/new" 
           className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-dime-orange hover:bg-[#d04b08] text-white text-sm font-semibold rounded-lg shadow-sm transition-all hover:shadow focus:ring-2 focus:ring-offset-2 focus:ring-dime-orange whitespace-nowrap"
         >
           <Plus className="w-4 h-4" />
