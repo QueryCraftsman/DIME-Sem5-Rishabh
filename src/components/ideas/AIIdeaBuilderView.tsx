@@ -178,6 +178,9 @@ export function AIIdeaBuilderView({
     setIsSubmittingValidation(true);
     setErrorMessage(null);
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 20000);
+
     try {
       const fullTranscript = messages.map(m => `${m.role === "user" ? "User" : "AI"}: ${m.content}`).join("\n");
       const payload = {
@@ -194,18 +197,33 @@ export function AIIdeaBuilderView({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
+        signal: controller.signal,
       });
 
+      clearTimeout(timeoutId);
+
       if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(errText || "Failed to start analysis.");
+        let errMessage = "Failed to start analysis.";
+        try {
+          const errJson = await res.json();
+          errMessage = errJson.detail || errJson.error || errMessage;
+        } catch {
+          const errText = await res.text();
+          if (errText) errMessage = errText;
+        }
+        throw new Error(errMessage);
       }
 
       const result = await res.json();
       router.push(`/ideas/${result.db_idea_id}/analysis/${result.id}`);
     } catch (err: any) {
+      clearTimeout(timeoutId);
       console.error(err);
-      setErrorMessage(err.message || "Failed to start validation pipeline. Please try again.");
+      if (err.name === "AbortError") {
+        setErrorMessage("Request timed out connecting to the backend. Please ensure the backend server is running and try again.");
+      } else {
+        setErrorMessage(err.message || "Failed to start validation pipeline. Please try again.");
+      }
       setIsSubmittingValidation(false);
     }
   };
@@ -246,7 +264,7 @@ export function AIIdeaBuilderView({
             className={cn(
               "h-9 px-4 rounded-xl text-[12px] font-semibold flex items-center gap-2 transition-all shadow-sm",
               userMessagesCount > 0
-                ? "bg-purple-600 hover:bg-purple-700 text-white"
+                ? "bg-dime-orange hover:bg-[#d04b08] text-white"
                 : "bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed"
             )}
           >
@@ -313,7 +331,7 @@ export function AIIdeaBuilderView({
                           type="button"
                           onClick={() => handleSendMessage(chip)}
                           disabled={isSending}
-                          className="text-[11px] font-semibold px-3 py-1 rounded-full bg-white dark:bg-slate-800 border border-purple-200 dark:border-purple-800 text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/40 transition-colors shadow-2xs text-left"
+                          className="text-[11px] font-semibold px-3 py-1 rounded-full bg-white dark:bg-slate-800 border border-orange-200/80 dark:border-orange-900/40 text-orange-700 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950/40 transition-colors shadow-2xs text-left"
                         >
                           {chip}
                         </button>

@@ -4,21 +4,17 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
-  Sparkles,
   Bot,
   Database,
-  Activity,
   Layers,
   Clock,
   CheckCircle2,
   AlertCircle,
-  FileCheck2,
   RefreshCw,
   Terminal,
   Zap,
   ShieldCheck,
   ChevronRight,
-  ExternalLink
 } from "lucide-react";
 import AnalysisPipeline from "@/components/analysis/AnalysisPipeline";
 import AgentActivityPanel from "@/components/analysis/AgentActivityPanel";
@@ -141,73 +137,86 @@ export function AgentPipelineOverlay({
 
   const currentStageInfo =
     STAGE_DESCRIPTIONS[analysisState.stage] || {
-      label: analysisState.stage.replace(/_/g, " "),
+      label: analysisState.stage?.replace(/_/g, " ") || "Processing",
       desc: "Autonomous agents are evaluating your idea parameters...",
       icon: "🤖",
     };
 
-  const completedSources = sources.filter((s) => s.status === "COMPLETED").length;
+  const completedSources = sources.filter((s) => s.status?.toUpperCase() === "COMPLETED").length;
   const totalEvidenceSelected = sources.reduce(
     (sum, s) => sum + (s.selected_count ?? s.records_indexed ?? s.records_found ?? 0),
     0
   );
 
+  const ieeeSource = sources.find(
+    (s) => s.source_name === "IEEE Xplore" || s.source_name?.toLowerCase().includes("ieee")
+  );
+
+  const getIeeeStatusText = () => {
+    if (!ieeeSource) return "Fallback Active";
+    if (ieeeSource.status === "COMPLETED") return `Active (${ieeeSource.selected_count || 0} cited)`;
+    if (ieeeSource.status === "RUNNING") return "Querying...";
+    if (ieeeSource.status === "FAILED") return "Fallback Active";
+    if (ieeeSource.status === "SKIPPED") return "Skipped (Fallback Active)";
+    return "Pending Query";
+  };
+
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col font-sans selection:bg-purple-500 selection:text-white">
-      {/* ── Top Floating Execution Bar ───────────────────────────────── */}
-      <header className="border-b border-slate-800 bg-slate-950/80 backdrop-blur-md sticky top-0 z-40 px-4 sm:px-6 py-3.5">
-        <div className="max-w-[1440px] mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div className="min-h-full bg-[#FAF7F2] dark:bg-[#141311] text-slate-900 dark:text-[#F4F0E9] flex flex-col font-sans transition-colors selection:bg-orange-500 selection:text-white">
+      {/* ── Top Execution Header ─────────────────────────────────────── */}
+      <header className="sticky top-0 z-30 bg-white/95 dark:bg-[#1A1816]/95 backdrop-blur-md border-b border-[#EAE4DC] dark:border-[#2E2A25] px-4 sm:px-6 py-3 shadow-[0_1px_2px_rgba(0,0,0,0.02)] transition-colors">
+        <div className="max-w-[1400px] mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           {/* Left: Navigation and Title */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 min-w-0">
             <Link
               href="/validate"
-              className="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors border border-slate-700/60"
+              className="p-2 rounded-xl bg-white dark:bg-[#201E1B] hover:bg-stone-100 dark:hover:bg-[#26231F] text-slate-600 dark:text-[#C1B8AD] hover:text-slate-900 dark:hover:text-white transition-colors border border-slate-200/80 dark:border-[#34302B] shadow-2xs shrink-0"
               title="Return to Idea Submission"
             >
               <ArrowLeft className="w-4 h-4" />
             </Link>
 
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="relative flex h-2.5 w-2.5">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 mb-0.5">
+                <span className="relative flex h-2 w-2 shrink-0">
                   {!isCompleted && !isFailed ? (
                     <>
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                     </>
                   ) : isCompleted ? (
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                   ) : (
-                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
                   )}
                 </span>
-                <span className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-semibold">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 font-mono">
                   {isCompleted
                     ? "Pipeline Finished"
                     : isFailed
-                    ? "Pipeline Stopped"
+                    ? "Pipeline Interrupted"
                     : "Autonomous Pipeline Active"}
                 </span>
               </div>
-              <h1 className="text-base sm:text-lg font-bold text-white tracking-tight line-clamp-1">
+              <h1 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight truncate">
                 {analysisState.title || "Validating Idea Concept"}
               </h1>
             </div>
           </div>
 
           {/* Right: Key Live Stats & Actions */}
-          <div className="flex items-center gap-4">
-            <div className="hidden sm:flex items-center gap-4 text-xs font-mono text-slate-400">
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-800/70 border border-slate-700/50">
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="hidden sm:flex items-center gap-2.5 text-xs font-medium">
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-stone-50 dark:bg-[#201E1B] border border-slate-200/80 dark:border-[#34302B] text-slate-600 dark:text-[#C1B8AD]">
                 <Clock className="w-3.5 h-3.5 text-slate-400" />
-                <span>Elapsed: {formatTime(elapsedSeconds)}</span>
+                <span className="font-mono">Elapsed: {formatTime(elapsedSeconds)}</span>
               </div>
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-800/70 border border-slate-700/50">
-                <Bot className="w-3.5 h-3.5 text-purple-400" />
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-orange-50/70 dark:bg-orange-950/30 border border-orange-200/60 dark:border-orange-900/30 text-dime-orange dark:text-orange-400 font-semibold">
+                <Bot className="w-3.5 h-3.5 text-dime-orange" />
                 <span>Agents: {agents.length > 0 ? agents.length : 6}</span>
               </div>
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-800/70 border border-slate-700/50">
-                <Database className="w-3.5 h-3.5 text-cyan-400" />
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200/60 dark:border-blue-900/30 text-dime-blue dark:text-blue-400 font-semibold">
+                <Database className="w-3.5 h-3.5 text-dime-blue" />
                 <span>Evidence Docs: {totalEvidenceSelected}</span>
               </div>
             </div>
@@ -215,7 +224,7 @@ export function AgentPipelineOverlay({
             {isCompleted && onViewReport && (
               <button
                 onClick={onViewReport}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-semibold text-xs shadow-lg shadow-emerald-900/30 transition-all animate-bounce"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-dime-orange hover:bg-[#d04b08] text-white font-semibold text-xs shadow-sm hover:shadow transition-all active:scale-95"
               >
                 <span>View Full Analysis</span>
                 <ChevronRight className="w-4 h-4" />
@@ -225,7 +234,7 @@ export function AgentPipelineOverlay({
             {isFailed && onRetry && (
               <button
                 onClick={onRetry}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs shadow-lg transition-all"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs shadow-sm transition-all active:scale-95"
               >
                 <RefreshCw className="w-4 h-4" />
                 <span>Retry Pipeline</span>
@@ -235,14 +244,14 @@ export function AgentPipelineOverlay({
         </div>
 
         {/* Dynamic Progress Bar */}
-        <div className="mt-3 w-full bg-slate-800/80 h-1.5 rounded-full overflow-hidden">
+        <div className="mt-2.5 w-full bg-slate-100 dark:bg-[#26231F] h-1.5 rounded-full overflow-hidden border border-slate-200/40 dark:border-slate-800">
           <div
             className={`h-full transition-all duration-700 ease-out rounded-full ${
               isCompleted
-                ? "bg-gradient-to-r from-emerald-500 to-teal-400"
+                ? "bg-emerald-500"
                 : isFailed
                 ? "bg-rose-500"
-                : "bg-gradient-to-r from-purple-500 via-indigo-500 to-cyan-400"
+                : "bg-dime-orange"
             }`}
             style={{ width: `${Math.max(5, Math.min(100, analysisState.progress))}%` }}
           />
@@ -250,21 +259,20 @@ export function AgentPipelineOverlay({
       </header>
 
       {/* ── Main Pipeline Overlay Content ────────────────────────────── */}
-      <main className="flex-1 max-w-[1440px] w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+      <main className="flex-1 max-w-[1400px] w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
         {/* Stage Status Hero Banner */}
-        <div className="relative overflow-hidden rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-900 via-slate-900 to-slate-950 p-6 md:p-8 shadow-xl">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-cyan-600/10 rounded-full blur-3xl pointer-events-none -ml-20 -mb-20" />
+        <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 dark:border-[#34302B] bg-white dark:bg-[#201E1B] p-6 md:p-7 shadow-xs transition-colors">
+          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-dime-orange via-amber-500 to-orange-400" />
 
           <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="space-y-2 max-w-3xl">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-purple-950/60 text-purple-300 border border-purple-800/50">
+            <div className="space-y-2.5 max-w-3xl">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-orange-50 dark:bg-orange-950/40 text-dime-orange dark:text-orange-400 border border-orange-200/80 dark:border-orange-800/40">
                 <span className="text-sm">{currentStageInfo.icon}</span>
                 <span>Current Stage: {currentStageInfo.label}</span>
-                <span className="font-mono text-purple-400">({analysisState.progress}%)</span>
+                <span className="font-mono text-dime-orange font-bold">({analysisState.progress}%)</span>
               </div>
 
-              <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
                 {isCompleted
                   ? "Validation Complete! Unlocking intelligence workspaces..."
                   : isFailed
@@ -272,22 +280,22 @@ export function AgentPipelineOverlay({
                   : currentStageInfo.label}
               </h2>
 
-              <p className="text-sm text-slate-400 leading-relaxed">
+              <p className="text-sm text-slate-600 dark:text-[#C1B8AD] leading-relaxed">
                 {isCompleted
                   ? "All 11 autonomous intelligence stages have completed. Deterministic scores, competitive benchmarks, and academic citations have been compiled."
                   : currentStageInfo.desc}
               </p>
 
               {analysisState.domain && (
-                <div className="flex flex-wrap items-center gap-2 pt-2">
-                  <span className="text-xs text-slate-500 font-medium">Domain Focus:</span>
-                  <span className="text-xs font-semibold px-2.5 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700">
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">Domain Focus:</span>
+                  <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-stone-50 dark:bg-[#26231F] text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-[#34302B]">
                     {analysisState.domain}
                   </span>
                   {analysisState.target_audience && (
                     <>
-                      <span className="text-xs text-slate-500 font-medium">Target:</span>
-                      <span className="text-xs font-semibold px-2.5 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700">
+                      <span className="text-xs text-slate-400 dark:text-slate-500 font-medium ml-1">Target:</span>
+                      <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-stone-50 dark:bg-[#26231F] text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-[#34302B]">
                         {analysisState.target_audience}
                       </span>
                     </>
@@ -298,18 +306,18 @@ export function AgentPipelineOverlay({
 
             {/* Quick Completion / Action Card */}
             {isCompleted ? (
-              <div className="bg-emerald-950/40 border border-emerald-800/60 rounded-2xl p-5 flex flex-col items-center text-center max-w-xs shrink-0">
-                <div className="p-3 bg-emerald-500/20 text-emerald-400 rounded-full mb-3">
-                  <CheckCircle2 className="w-8 h-8" />
+              <div className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 rounded-xl p-5 flex flex-col items-center text-center max-w-xs shrink-0">
+                <div className="p-2.5 bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 rounded-full mb-2.5">
+                  <CheckCircle2 className="w-6 h-6" />
                 </div>
-                <h4 className="font-bold text-white text-base">Validation Ready</h4>
-                <p className="text-xs text-slate-300 mt-1 mb-4">
-                  Multi-agent report and all 12 contextual tabs are ready for review.
+                <h4 className="font-bold text-slate-900 dark:text-white text-sm">Validation Ready</h4>
+                <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 mb-3">
+                  Multi-agent report and all 12 contextual intelligence tabs are ready.
                 </p>
                 {onViewReport && (
                   <button
                     onClick={onViewReport}
-                    className="w-full py-2.5 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2"
+                    className="w-full py-2 px-4 rounded-xl bg-dime-orange hover:bg-[#d04b08] text-white font-semibold text-xs shadow-sm transition-all flex items-center justify-center gap-1.5"
                   >
                     <span>Open Workspaces</span>
                     <ChevronRight className="w-4 h-4" />
@@ -317,18 +325,18 @@ export function AgentPipelineOverlay({
                 )}
               </div>
             ) : isFailed ? (
-              <div className="bg-rose-950/40 border border-rose-800/60 rounded-2xl p-5 flex flex-col items-center text-center max-w-xs shrink-0">
-                <div className="p-3 bg-rose-500/20 text-rose-400 rounded-full mb-3">
-                  <AlertCircle className="w-8 h-8" />
+              <div className="bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/40 rounded-xl p-5 flex flex-col items-center text-center max-w-xs shrink-0">
+                <div className="p-2.5 bg-rose-100 dark:bg-rose-900/50 text-rose-600 dark:text-rose-400 rounded-full mb-2.5">
+                  <AlertCircle className="w-6 h-6" />
                 </div>
-                <h4 className="font-bold text-rose-300 text-base">Execution Failed</h4>
-                <p className="text-xs text-slate-300 mt-1 mb-4">
-                  {error || "An agent or network query timed out. You can retry with a single click."}
+                <h4 className="font-bold text-rose-800 dark:text-rose-300 text-sm">Execution Interrupted</h4>
+                <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 mb-3">
+                  {error || "An agent or query encountered an interruption. You can retry with a single click."}
                 </p>
                 {onRetry && (
                   <button
                     onClick={onRetry}
-                    className="w-full py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2"
+                    className="w-full py-2 px-4 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs shadow-sm transition-all flex items-center justify-center gap-1.5"
                   >
                     <RefreshCw className="w-4 h-4" />
                     <span>Retry Validation</span>
@@ -336,62 +344,62 @@ export function AgentPipelineOverlay({
                 )}
               </div>
             ) : (
-              <div className="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-5 flex flex-col justify-center max-w-xs shrink-0 space-y-3">
-                <div className="flex items-center gap-2 text-xs font-semibold text-slate-300">
-                  <Zap className="w-4 h-4 text-amber-400" />
+              <div className="bg-stone-50/80 dark:bg-[#26231F] border border-slate-200/80 dark:border-[#34302B] rounded-xl p-4 flex flex-col justify-center max-w-xs shrink-0 space-y-2">
+                <div className="flex items-center gap-2 text-xs font-semibold text-slate-800 dark:text-slate-200">
+                  <Zap className="w-4 h-4 text-dime-orange" />
                   <span>Autonomous Orchestration</span>
                 </div>
-                <p className="text-xs text-slate-400 leading-relaxed">
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
                   DIME agents query external APIs, filter noise with cross-encoders, and synthesize verified intelligence.
                 </p>
-                <div className="flex items-center justify-between text-xs font-mono text-slate-400 pt-1 border-t border-slate-700/60">
+                <div className="flex items-center justify-between text-xs font-mono text-slate-600 dark:text-slate-400 pt-2 border-t border-slate-200/70 dark:border-[#34302B]">
                   <span>Current Progress:</span>
-                  <span className="font-bold text-purple-400">{analysisState.progress}%</span>
+                  <span className="font-bold text-dime-orange">{analysisState.progress}%</span>
                 </div>
               </div>
             )}
           </div>
         </div>
 
-        {/* View Switcher Tabs (For inspecting pipeline details without leaving overlay) */}
-        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-          <div className="flex items-center gap-2">
+        {/* View Switcher Tabs (Consistent segmented controls matching DIME theme) */}
+        <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-[#2E2A25] pb-3">
+          <div className="flex items-center gap-1.5 p-1 bg-stone-100 dark:bg-[#26231F] rounded-xl border border-slate-200/60 dark:border-[#34302B]">
             <button
               onClick={() => setActiveView("stream")}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all ${
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                 activeView === "stream"
-                  ? "bg-purple-600 text-white shadow-sm"
-                  : "bg-slate-800/80 text-slate-400 hover:text-white"
+                  ? "bg-white dark:bg-[#201E1B] text-slate-900 dark:text-white shadow-2xs border border-slate-200/60 dark:border-[#34302B]"
+                  : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
-              <Terminal className="w-4 h-4" />
+              <Terminal className="w-3.5 h-3.5 text-dime-orange" />
               <span>Agent Live Stream</span>
             </button>
             <button
               onClick={() => setActiveView("pipeline")}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all ${
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                 activeView === "pipeline"
-                  ? "bg-purple-600 text-white shadow-sm"
-                  : "bg-slate-800/80 text-slate-400 hover:text-white"
+                  ? "bg-white dark:bg-[#201E1B] text-slate-900 dark:text-white shadow-2xs border border-slate-200/60 dark:border-[#34302B]"
+                  : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
-              <Layers className="w-4 h-4" />
+              <Layers className="w-3.5 h-3.5 text-dime-orange" />
               <span>Pipeline Stages</span>
             </button>
             <button
               onClick={() => setActiveView("sources")}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all ${
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                 activeView === "sources"
-                  ? "bg-purple-600 text-white shadow-sm"
-                  : "bg-slate-800/80 text-slate-400 hover:text-white"
+                  ? "bg-white dark:bg-[#201E1B] text-slate-900 dark:text-white shadow-2xs border border-slate-200/60 dark:border-[#34302B]"
+                  : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
               }`}
             >
-              <Database className="w-4 h-4" />
+              <Database className="w-3.5 h-3.5 text-dime-orange" />
               <span>Source Funnel ({sources.length})</span>
             </button>
           </div>
 
-          <div className="text-xs text-slate-500 hidden sm:block">
+          <div className="text-xs text-slate-400 dark:text-slate-500 hidden sm:block font-medium">
             {isCompleted
               ? "All agents completed successfully."
               : "No idea tabs are shown until pipeline completion."}
@@ -399,7 +407,7 @@ export function AgentPipelineOverlay({
         </div>
 
         {/* ── Main Layout: Grid ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Left Column (8 cols): Active View */}
           <div className="lg:col-span-8 space-y-6">
             {activeView === "stream" && (
@@ -410,7 +418,7 @@ export function AgentPipelineOverlay({
             )}
 
             {activeView === "pipeline" && (
-              <div className="border border-slate-800 rounded-2xl overflow-hidden bg-slate-900/60">
+              <div className="border border-slate-200/80 dark:border-[#34302B] rounded-2xl overflow-hidden bg-white dark:bg-[#201E1B] shadow-xs">
                 <AnalysisPipeline
                   stage={analysisState.stage}
                   status={analysisState.status}
@@ -429,7 +437,7 @@ export function AgentPipelineOverlay({
           {/* Right Column (4 cols): Sticky Pipeline Stage Monitor */}
           <div className="lg:col-span-4 space-y-6">
             {/* Stage Timeline */}
-            <div className="border border-slate-800 rounded-2xl overflow-hidden bg-slate-900/60 p-1">
+            <div className="border border-slate-200/80 dark:border-[#34302B] rounded-2xl overflow-hidden bg-white dark:bg-[#201E1B] shadow-xs">
               <AnalysisPipeline
                 stage={analysisState.stage}
                 status={analysisState.status}
@@ -437,33 +445,53 @@ export function AgentPipelineOverlay({
               />
             </div>
 
-            {/* Evidence Radar / Source Funnel Preview */}
-            <div className="border border-slate-800 rounded-2xl bg-slate-900/60 p-5 space-y-4">
+            {/* Evidence Integrity Panel */}
+            <div className="border border-slate-200/80 dark:border-[#34302B] rounded-2xl bg-white dark:bg-[#201E1B] p-5 space-y-4 shadow-xs transition-colors">
               <div className="flex items-center justify-between">
-                <h4 className="text-xs font-bold uppercase text-slate-400 tracking-wider flex items-center gap-2">
-                  <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                <h4 className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wider flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                   <span>Evidence Integrity</span>
                 </h4>
-                <span className="text-[11px] font-mono text-emerald-400">100% Grounded</span>
+                {totalEvidenceSelected > 0 ? (
+                  <span className="text-[11px] font-mono font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800/40">
+                    Verified Grounded
+                  </span>
+                ) : (
+                  <span className="text-[11px] font-mono font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800/40">
+                    Awaiting Evidence
+                  </span>
+                )}
               </div>
 
-              <div className="space-y-2 text-xs text-slate-300">
-                <div className="flex justify-between py-1 border-b border-slate-800">
-                  <span className="text-slate-400">Sources Ingested:</span>
-                  <span className="font-semibold text-white">{completedSources} of {sources.length || 5}</span>
+              <div className="space-y-2 text-xs text-slate-600 dark:text-[#C1B8AD]">
+                <div className="flex justify-between py-1.5 border-b border-slate-100 dark:border-[#2E2A25]">
+                  <span className="text-slate-500 dark:text-slate-400">Sources Ingested:</span>
+                  <span className="font-semibold text-slate-900 dark:text-white">
+                    {completedSources} of {sources.length || 5}
+                  </span>
                 </div>
-                <div className="flex justify-between py-1 border-b border-slate-800">
-                  <span className="text-slate-400">Selected Citations:</span>
-                  <span className="font-semibold text-emerald-400">{totalEvidenceSelected}</span>
+                <div className="flex justify-between py-1.5 border-b border-slate-100 dark:border-[#2E2A25]">
+                  <span className="text-slate-500 dark:text-slate-400">Selected Citations:</span>
+                  <span
+                    className={`font-semibold ${
+                      totalEvidenceSelected > 0
+                        ? "text-emerald-600 dark:text-emerald-400 font-bold"
+                        : "text-slate-500 dark:text-slate-400"
+                    }`}
+                  >
+                    {totalEvidenceSelected}
+                  </span>
                 </div>
-                <div className="flex justify-between py-1 border-b border-slate-800">
-                  <span className="text-slate-400">Vector Deduplication:</span>
-                  <span className="font-semibold text-white">Cosine ≥ 0.88</span>
+                <div className="flex justify-between py-1.5 border-b border-slate-100 dark:border-[#2E2A25]">
+                  <span className="text-slate-500 dark:text-slate-400">Vector Deduplication:</span>
+                  <span className="font-semibold text-slate-800 dark:text-slate-200">
+                    Cosine ≥ 0.88 (Qdrant)
+                  </span>
                 </div>
-                <div className="flex justify-between py-1">
-                  <span className="text-slate-400">IEEE Xplore Status:</span>
-                  <span className="font-semibold text-slate-400">
-                    {sources.find((s) => s.source_name === "IEEE Xplore")?.status || "Fallback Active"}
+                <div className="flex justify-between py-1.5">
+                  <span className="text-slate-500 dark:text-slate-400">IEEE Xplore Status:</span>
+                  <span className="font-semibold text-slate-700 dark:text-slate-300">
+                    {getIeeeStatusText()}
                   </span>
                 </div>
               </div>

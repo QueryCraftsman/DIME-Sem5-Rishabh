@@ -32,6 +32,8 @@ engine = create_async_engine(
     pool_size=10,
     max_overflow=20,
     pool_pre_ping=True,
+    pool_recycle=1800,
+    connect_args={"command_timeout": 15},
 )
 
 async_session_factory = async_sessionmaker(
@@ -46,7 +48,9 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with async_session_factory() as session:
         try:
             yield session
-            await session.commit()
+            if session.is_active:
+                await session.commit()
         except Exception:
-            await session.rollback()
+            if session.is_active:
+                await session.rollback()
             raise

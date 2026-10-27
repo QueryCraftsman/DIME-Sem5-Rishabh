@@ -30,21 +30,30 @@ export default function AnalysisPipeline({ stage, status, progress }: PipelinePr
   const isCompleted = status === "COMPLETED" || status === "completed";
 
   return (
-    <div className="p-6 flex flex-col h-full bg-white dark:bg-[#201E1B]">
-      <h2 className="text-lg font-semibold text-slate-900 dark:text-[#F4F0E9] mb-2">Analysis Pipeline</h2>
-      <p className="text-xs text-slate-400 dark:text-[#9A9085] mb-6">
+    <div className="p-5 sm:p-6 flex flex-col h-full bg-white dark:bg-[#201E1B] transition-colors">
+      <div className="flex items-center justify-between mb-1">
+        <h2 className="text-base font-semibold text-slate-900 dark:text-[#F4F0E9]">Analysis Pipeline</h2>
+        <span className="text-xs font-mono font-semibold px-2 py-0.5 rounded-full bg-stone-100 dark:bg-[#26231F] text-slate-600 dark:text-slate-400 border border-slate-200/60 dark:border-[#34302B]">
+          {isCompleted
+            ? "Complete"
+            : isFailed
+            ? "Interrupted"
+            : `${Math.max(currentIndex + 1, 1)} / ${STAGES.length}`}
+        </span>
+      </div>
+      <p className="text-xs text-slate-500 dark:text-[#9A9085] mb-5">
         {isCompleted
-          ? "Analysis complete"
+          ? "All autonomous evaluation stages finished"
           : isFailed
-          ? "Analysis encountered an error"
-          : `Stage ${Math.max(currentIndex + 1, 1)} of ${STAGES.length}`}
+          ? "Pipeline encountered an issue"
+          : "Sequential multi-agent intelligence progression"}
       </p>
 
       <div className="flex-1 relative">
         {/* Vertical line connecting steps */}
-        <div className="absolute left-[15px] top-4 bottom-4 w-0.5 bg-slate-100 dark:bg-[#34302B] z-0"></div>
+        <div className="absolute left-[11px] top-3 bottom-3 w-0.5 bg-slate-200/80 dark:bg-[#34302B] z-0"></div>
 
-        <ul className="relative z-10 space-y-6">
+        <ul className="relative z-10 space-y-4">
           {STAGES.map((s, idx) => {
             const stepCompleted = isCompleted || idx < currentIndex;
             const isCurrent = idx === currentIndex && !isCompleted && !isFailed;
@@ -52,36 +61,45 @@ export default function AnalysisPipeline({ stage, status, progress }: PipelinePr
 
             let Icon = Circle;
             let iconColor = "text-slate-300 dark:text-slate-600";
-            let textColor = "text-slate-500 dark:text-[#9A9085]";
+            let textColor = "text-slate-400 dark:text-slate-500";
+            let badgeBg = "bg-white dark:bg-[#201E1B]";
 
             if (stepCompleted) {
               Icon = CheckCircle2;
-              iconColor = "text-green-500 dark:text-green-400";
-              textColor = "text-slate-900 dark:text-[#F4F0E9]";
+              iconColor = "text-emerald-600 dark:text-emerald-400";
+              textColor = "text-slate-800 dark:text-[#F4F0E9] font-medium";
             } else if (stepFailed) {
               Icon = XCircle;
-              iconColor = "text-red-500 dark:text-red-400";
-              textColor = "text-red-700 dark:text-red-400 font-medium";
+              iconColor = "text-rose-600 dark:text-rose-400";
+              textColor = "text-rose-700 dark:text-rose-400 font-semibold";
             } else if (isCurrent) {
               Icon = Loader2;
-              iconColor = "text-purple-500 dark:text-purple-400 animate-spin";
-              textColor = "text-purple-700 dark:text-purple-300 font-medium";
+              iconColor = "text-dime-orange animate-spin";
+              textColor = "text-dime-orange dark:text-orange-400 font-semibold";
+              badgeBg = "bg-orange-50/70 dark:bg-orange-950/30";
             }
 
             return (
-              <li key={s.id} className="flex items-start gap-4">
-                <div className="mt-0.5 bg-white dark:bg-[#201E1B] rounded-full">
-                  <Icon className={`w-7 h-7 ${iconColor}`} />
+              <li key={s.id} className="flex items-start gap-3">
+                <div className={`mt-0.5 p-0.5 ${badgeBg} rounded-full z-10 transition-colors`}>
+                  <Icon className={`w-5 h-5 ${iconColor}`} />
                 </div>
-                <div className="flex-1">
-                  <span className={`text-[15px] tracking-tight ${textColor}`}>
-                    {s.label}
-                  </span>
+                <div className="flex-1 min-w-0 pt-0.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className={`text-[13px] tracking-tight ${textColor}`}>
+                      {s.label}
+                    </span>
+                    {isCurrent && (
+                      <span className="text-[11px] font-mono font-bold text-dime-orange shrink-0">
+                        {progress}%
+                      </span>
+                    )}
+                  </div>
                   {isCurrent && (
-                    <div className="mt-2 h-1.5 w-full bg-slate-100 dark:bg-[#34302B] rounded-full overflow-hidden">
+                    <div className="mt-1.5 h-1.5 w-full bg-stone-100 dark:bg-[#26231F] rounded-full overflow-hidden border border-slate-200/50 dark:border-slate-800">
                       <div
-                        className="h-full bg-purple-500 transition-all duration-500 ease-out rounded-full"
-                        style={{ width: `${progress}%` }}
+                        className="h-full bg-dime-orange transition-all duration-500 ease-out rounded-full"
+                        style={{ width: `${Math.max(5, Math.min(100, progress))}%` }}
                       />
                     </div>
                   )}

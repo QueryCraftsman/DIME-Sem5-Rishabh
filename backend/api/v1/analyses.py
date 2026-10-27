@@ -133,7 +133,10 @@ async def create_analysis(
     await db.refresh(analysis)
     
     # Queue the celery task
-    run_analysis_pipeline.delay(analysis.id)
+    try:
+        run_analysis_pipeline.delay(analysis.id)
+    except Exception as exc:
+        logger.error(f"Failed to enqueue Celery task for analysis {analysis.id}: {exc}")
     
     return {
         "id": analysis.id,

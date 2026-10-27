@@ -205,6 +205,9 @@ export function DescribeIdeaView({
     setIsSubmittingValidation(true);
     setErrorMessage(null);
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s client timeout
+
     try {
       const payload = {
         title: payloadData.title,
@@ -220,18 +223,33 @@ export function DescribeIdeaView({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
+        signal: controller.signal,
       });
 
+      clearTimeout(timeoutId);
+
       if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(errText || "Failed to start analysis.");
+        let errMessage = "Failed to start analysis.";
+        try {
+          const errJson = await res.json();
+          errMessage = errJson.detail || errJson.error || errMessage;
+        } catch {
+          const errText = await res.text();
+          if (errText) errMessage = errText;
+        }
+        throw new Error(errMessage);
       }
 
       const result = await res.json();
       router.push(`/ideas/${result.db_idea_id}/analysis/${result.id}`);
     } catch (err: any) {
-      console.error(err);
-      setErrorMessage(err.message || "Failed to start validation pipeline. Please try again.");
+      clearTimeout(timeoutId);
+      console.error("Validation submission error:", err);
+      if (err.name === "AbortError") {
+        setErrorMessage("Request timed out connecting to the backend. Please ensure the backend server is running and try again.");
+      } else {
+        setErrorMessage(err.message || "Failed to start validation pipeline. Please try again.");
+      }
       setIsSubmittingValidation(false);
     }
   };

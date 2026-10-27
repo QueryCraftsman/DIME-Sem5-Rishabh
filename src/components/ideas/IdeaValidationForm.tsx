@@ -97,24 +97,42 @@ export function IdeaValidationForm() {
     if (!validate()) return;
     
     setIsSubmitting(true);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 20000);
+
     try {
       const res = await fetch("/api/ideas/start-analysis", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(getPayload()),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
       
       if (res.ok) {
         const data = await res.json();
         router.push(`/ideas/${data.db_idea_id}/analysis/${data.id}`);
       } else {
-        const errText = await res.text();
-        alert(`Failed to start analysis: ${errText}`);
+        let errText = "Failed to start analysis.";
+        try {
+          const errJson = await res.json();
+          errText = errJson.detail || errJson.error || errText;
+        } catch {
+          const raw = await res.text();
+          if (raw) errText = raw;
+        }
+        alert(`Validation error: ${errText}`);
         setIsSubmitting(false);
       }
-    } catch (err) {
+    } catch (err: any) {
+      clearTimeout(timeoutId);
       console.error(err);
-      alert("An error occurred while starting the analysis.");
+      alert(
+        err.name === "AbortError"
+          ? "Request timed out connecting to the backend. Please retry."
+          : "An error occurred while starting the analysis."
+      );
       setIsSubmitting(false);
     }
   };
