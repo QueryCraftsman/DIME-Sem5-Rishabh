@@ -1,12 +1,14 @@
 import React from "react";
-import { Lightbulb, CheckCircle2, Database, Globe } from "lucide-react";
+import { Lightbulb, CheckCircle2, Database, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface KpiStats {
   totalIdeas: number;
   completedAnalyses: number;
   evidenceItems: number;
-  indexedSources: number;
+  researchSourcesUsed?: number;
+  globalIndexedSources?: number;
+  indexedSources?: number;
 }
 
 export function KpiCards({ stats, isLoading }: { stats?: KpiStats; isLoading: boolean }) {
@@ -33,9 +35,9 @@ export function KpiCards({ stats, isLoading }: { stats?: KpiStats; isLoading: bo
       bg: "bg-purple-50 dark:bg-purple-900/20",
     },
     {
-      title: "Indexed sources",
-      value: stats?.indexedSources || 0,
-      icon: Globe,
+      title: "Research Sources Used",
+      value: stats?.researchSourcesUsed ?? stats?.indexedSources ?? 0,
+      icon: BookOpen,
       color: "text-dime-cyan",
       bg: "bg-cyan-50 dark:bg-cyan-900/20",
     },

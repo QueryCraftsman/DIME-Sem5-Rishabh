@@ -249,28 +249,40 @@ export async function GET(req: Request) {
       (idea) => idea.status === "VALIDATED" || idea.status === "REJECTED" || idea.status === "COMPLETED"
     ).length;
 
-    // Fetch evidence count from FastAPI schema via safe raw SQL
+    // Fetch user-scoped metrics (evidenceItems and researchSourcesUsed) via safe raw SQL
     let evidenceItems = 0;
-    let indexedSources = 0;
+    let researchSourcesUsed = 0;
+    let globalIndexedSources = 0;
 
     try {
-      const evidenceRows = await prisma.$queryRaw<Array<{ count: bigint | number }>>`
-        SELECT COUNT(e.id) as count 
-        FROM evidence e 
-        JOIN analyses a ON e.analysis_id = a.id 
-        WHERE a.user_id = ${userId}
-      `;
-      evidenceItems = Number(evidenceRows[0]?.count ?? 0);
+      const [evidenceRows, userSourcesRows] = await Promise.all([
+        prisma.$queryRaw<Array<{ count: bigint | number }>>`
+          SELECT COUNT(e.id) as count 
+          FROM evidence e 
+          JOIN analyses a ON e.analysis_id = a.id 
+          WHERE a.user_id = ${userId}
+        `,
+        prisma.$queryRaw<Array<{ count: bigint | number }>>`
+          SELECT COUNT(DISTINCT COALESCE(e.document_id, e.source_url)) as count
+          FROM evidence e
+          JOIN analyses a ON e.analysis_id = a.id
+          WHERE a.user_id = ${userId}
+            AND (e.document_id IS NOT NULL OR e.source_url IS NOT NULL)
+        `,
+      ]);
 
-      // Check in-memory cache for source_documents count to avoid full-table scans
+      evidenceItems = Number(evidenceRows[0]?.count ?? 0);
+      researchSourcesUsed = Number(userSourcesRows[0]?.count ?? 0);
+
+      // Check in-memory cache for global source_documents count to avoid full-table scans
       if (cachedSourcesCount && (Date.now() - cachedSourcesCount.timestamp < SOURCES_CACHE_TTL_MS)) {
-        indexedSources = cachedSourcesCount.value;
+        globalIndexedSources = cachedSourcesCount.value;
       } else {
         const sourcesRows = await prisma.$queryRaw<Array<{ count: bigint | number }>>`
           SELECT COUNT(id) as count FROM source_documents
         `;
-        indexedSources = Number(sourcesRows[0]?.count ?? 0);
-        cachedSourcesCount = { value: indexedSources, timestamp: Date.now() };
+        globalIndexedSources = Number(sourcesRows[0]?.count ?? 0);
+        cachedSourcesCount = { value: globalIndexedSources, timestamp: Date.now() };
       }
     } catch (dbErr) {
       console.warn("Could not query external intelligence tables:", dbErr);
@@ -393,7 +405,9 @@ export async function GET(req: Request) {
         totalIdeas: allIdeas.length,
         completedAnalyses,
         evidenceItems,
-        indexedSources,
+        researchSourcesUsed,
+        globalIndexedSources,
+        indexedSources: researchSourcesUsed, // Backward compatibility alias for 4th KPI card
       },
       opportunityMix,
       recentActivity,
