@@ -338,9 +338,6 @@ export default function SettingsPage() {
                   <p className="text-sm font-semibold text-foreground truncate">
                     {resolvedDisplayName}
                   </p>
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-primary/10 text-primary">
-                    Product Lead
-                  </span>
                 </div>
                 <p className="text-xs text-foreground-secondary truncate mt-0.5">
                   {email || "No email on record"}

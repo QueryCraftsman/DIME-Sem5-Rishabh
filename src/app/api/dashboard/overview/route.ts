@@ -8,9 +8,9 @@ let cachedSourcesCount: { value: number; timestamp: number } | null = null;
 const SOURCES_CACHE_TTL_MS = 60 * 1000;
 
 const mixColors = {
-  "High Potential": "#ea580c",
-  Promising: "#8b5cf6",
-  "Needs Validation": "#06b6d4",
+  "High Potential": "#10b981", // Luminous Emerald
+  Promising: "#f59e0b",       // Sunlit Amber
+  "Needs Validation": "#38bdf8", // Luminous Sky Blue
 } as const;
 
 const toTimeAgo = (date: Date) => {

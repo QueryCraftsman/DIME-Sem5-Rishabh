@@ -261,18 +261,29 @@ export function AgentPipelineOverlay({
       {/* ── Main Pipeline Overlay Content ────────────────────────────── */}
       <main className="flex-1 max-w-[1400px] w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
         {/* Stage Status Hero Banner */}
-        <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 dark:border-[#34302B] bg-white dark:bg-[#201E1B] p-6 md:p-7 shadow-xs transition-colors">
-          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-dime-orange via-amber-500 to-orange-400" />
+        <div className="relative overflow-hidden rounded-3xl border border-[#E7E0D8] dark:border-[#34302B] bg-gradient-to-br from-white via-[#FCFAF7] to-[#F8F4EE] dark:from-[#201E1B] dark:via-[#1D1B18] dark:to-[#171614] p-6 sm:p-8 shadow-xs transition-all duration-300">
+          {/* Subtle Ambient Radial Mesh */}
+          <div className="absolute -top-32 -left-32 w-80 h-80 bg-orange-500/5 dark:bg-orange-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-32 -right-32 w-80 h-80 bg-amber-500/5 dark:bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+          
+          {/* Top glowing accent line */}
+          <div className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-transparent via-dime-orange to-transparent opacity-90" />
 
-          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="space-y-2.5 max-w-3xl">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-orange-50 dark:bg-orange-950/40 text-dime-orange dark:text-orange-400 border border-orange-200/80 dark:border-orange-800/40">
+          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            <div className="space-y-3 max-w-3xl flex-1">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-orange-50/90 dark:bg-orange-950/40 text-dime-orange dark:text-orange-400 border border-orange-200/80 dark:border-orange-900/50 shadow-2xs">
+                <span className="relative flex h-2 w-2 shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-dime-orange"></span>
+                </span>
                 <span className="text-sm">{currentStageInfo.icon}</span>
                 <span>Current Stage: {currentStageInfo.label}</span>
-                <span className="font-mono text-dime-orange font-bold">({analysisState.progress}%)</span>
+                <span className="font-mono text-dime-orange dark:text-orange-400 font-bold bg-white/80 dark:bg-[#1A1816] px-2 py-0.5 rounded-md border border-orange-200/60 dark:border-orange-800/40 text-[11px] shadow-2xs">
+                  {analysisState.progress}%
+                </span>
               </div>
 
-              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+              <h2 className="text-2xl sm:text-[28px] font-extrabold text-[#171717] dark:text-[#F4F0E9] tracking-tight leading-snug">
                 {isCompleted
                   ? "Validation Complete! Unlocking intelligence workspaces..."
                   : isFailed
@@ -280,33 +291,35 @@ export function AgentPipelineOverlay({
                   : currentStageInfo.label}
               </h2>
 
-              <p className="text-sm text-slate-600 dark:text-[#C1B8AD] leading-relaxed">
+              <p className="text-sm text-[#625B54] dark:text-[#C1B8AD] leading-relaxed max-w-2xl">
                 {isCompleted
                   ? "All 11 autonomous intelligence stages have completed. Deterministic scores, competitive benchmarks, and academic citations have been compiled."
                   : currentStageInfo.desc}
               </p>
 
-              {analysisState.domain && (
-                <div className="flex flex-wrap items-center gap-2 pt-1">
-                  <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">Domain Focus:</span>
-                  <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-stone-50 dark:bg-[#26231F] text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-[#34302B]">
-                    {analysisState.domain}
-                  </span>
+              {(analysisState.domain || analysisState.target_audience) && (
+                <div className="flex flex-wrap items-center gap-2.5 pt-1.5">
+                  {analysisState.domain && (
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/90 dark:bg-[#26231F] border border-[#E7E0D8] dark:border-[#38332B] shadow-2xs text-xs">
+                      <span className="text-[11px] font-bold text-[#898078] dark:text-[#9A9085] uppercase tracking-wider">Domain:</span>
+                      <span className="font-semibold text-[#171717] dark:text-[#F4F0E9]">{analysisState.domain}</span>
+                    </div>
+                  )}
                   {analysisState.target_audience && (
-                    <>
-                      <span className="text-xs text-slate-400 dark:text-slate-500 font-medium ml-1">Target:</span>
-                      <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-stone-50 dark:bg-[#26231F] text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-[#34302B]">
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/90 dark:bg-[#26231F] border border-[#E7E0D8] dark:border-[#38332B] shadow-2xs text-xs max-w-full">
+                      <span className="text-[11px] font-bold text-[#898078] dark:text-[#9A9085] uppercase tracking-wider shrink-0">Target:</span>
+                      <span className="font-medium text-[#171717] dark:text-[#F4F0E9] break-words leading-relaxed" title={analysisState.target_audience}>
                         {analysisState.target_audience}
                       </span>
-                    </>
+                    </div>
                   )}
                 </div>
               )}
             </div>
 
-            {/* Quick Completion / Action Card */}
+            {/* Quick Completion / Action / Companion Card */}
             {isCompleted ? (
-              <div className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 rounded-xl p-5 flex flex-col items-center text-center max-w-xs shrink-0">
+              <div className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 rounded-2xl p-5 flex flex-col items-center text-center max-w-xs w-full shrink-0 shadow-xs">
                 <div className="p-2.5 bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 rounded-full mb-2.5">
                   <CheckCircle2 className="w-6 h-6" />
                 </div>
@@ -317,7 +330,7 @@ export function AgentPipelineOverlay({
                 {onViewReport && (
                   <button
                     onClick={onViewReport}
-                    className="w-full py-2 px-4 rounded-xl bg-dime-orange hover:bg-[#d04b08] text-white font-semibold text-xs shadow-sm transition-all flex items-center justify-center gap-1.5"
+                    className="w-full py-2.5 px-4 rounded-xl bg-dime-orange hover:bg-[#d04b08] text-white font-semibold text-xs shadow-sm transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
                   >
                     <span>Open Workspaces</span>
                     <ChevronRight className="w-4 h-4" />
@@ -325,7 +338,7 @@ export function AgentPipelineOverlay({
                 )}
               </div>
             ) : isFailed ? (
-              <div className="bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/40 rounded-xl p-5 flex flex-col items-center text-center max-w-xs shrink-0">
+              <div className="bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/40 rounded-2xl p-5 flex flex-col items-center text-center max-w-xs w-full shrink-0 shadow-xs">
                 <div className="p-2.5 bg-rose-100 dark:bg-rose-900/50 text-rose-600 dark:text-rose-400 rounded-full mb-2.5">
                   <AlertCircle className="w-6 h-6" />
                 </div>
@@ -336,7 +349,7 @@ export function AgentPipelineOverlay({
                 {onRetry && (
                   <button
                     onClick={onRetry}
-                    className="w-full py-2 px-4 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs shadow-sm transition-all flex items-center justify-center gap-1.5"
+                    className="w-full py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs shadow-sm transition-all flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
                   >
                     <RefreshCw className="w-4 h-4" />
                     <span>Retry Validation</span>
@@ -344,17 +357,37 @@ export function AgentPipelineOverlay({
                 )}
               </div>
             ) : (
-              <div className="bg-stone-50/80 dark:bg-[#26231F] border border-slate-200/80 dark:border-[#34302B] rounded-xl p-4 flex flex-col justify-center max-w-xs shrink-0 space-y-2">
-                <div className="flex items-center gap-2 text-xs font-semibold text-slate-800 dark:text-slate-200">
-                  <Zap className="w-4 h-4 text-dime-orange" />
-                  <span>Autonomous Orchestration</span>
+              <div className="bg-white/80 dark:bg-[#1A1816]/80 backdrop-blur-sm border border-[#E7E0D8] dark:border-[#34302B] rounded-2xl p-4 sm:p-5 flex flex-col justify-between max-w-xs w-full shrink-0 shadow-xs space-y-3">
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <div className="flex items-center gap-2 text-xs font-bold text-[#171717] dark:text-[#F4F0E9]">
+                      <div className="w-6 h-6 rounded-lg bg-orange-50 dark:bg-orange-950/50 flex items-center justify-center text-dime-orange border border-orange-200/60 dark:border-orange-900/40">
+                        <Zap className="w-3.5 h-3.5" />
+                      </div>
+                      <span>Autonomous Orchestration</span>
+                    </div>
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#69645F] dark:text-[#9A9085] leading-relaxed">
+                    DIME agents query external APIs, filter noise with cross-encoders, and synthesize verified intelligence.
+                  </p>
                 </div>
-                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                  DIME agents query external APIs, filter noise with cross-encoders, and synthesize verified intelligence.
-                </p>
-                <div className="flex items-center justify-between text-xs font-mono text-slate-600 dark:text-slate-400 pt-2 border-t border-slate-200/70 dark:border-[#34302B]">
-                  <span>Current Progress:</span>
-                  <span className="font-bold text-dime-orange">{analysisState.progress}%</span>
+
+                {/* Progress Tracker with Micro-bar */}
+                <div className="pt-2.5 border-t border-[#EAE4DC] dark:border-[#2E2A25] space-y-1.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-[11px] font-medium text-[#898078] dark:text-[#9A9085]">Stage Progression</span>
+                    <span className="font-bold font-mono text-dime-orange">{analysisState.progress}%</span>
+                  </div>
+                  <div className="w-full bg-stone-100 dark:bg-[#26231F] h-1.5 rounded-full overflow-hidden border border-slate-200/40 dark:border-slate-800">
+                    <div
+                      className="h-full bg-dime-orange rounded-full transition-all duration-500 ease-out"
+                      style={{ width: `${Math.max(5, Math.min(100, analysisState.progress))}%` }}
+                    />
+                  </div>
                 </div>
               </div>
             )}

@@ -60,7 +60,6 @@ export function ProfileDropdown() {
     displayName
   );
   const initials = getUserInitials(displayName);
-  const displayRole = "Product Lead";
 
   // Close on Escape or click outside
   useEffect(() => {
@@ -123,11 +122,8 @@ export function ProfileDropdown() {
 
         {/* User Info on larger screens */}
         <div className="hidden sm:flex flex-col text-left">
-          <span className="font-bold text-xs text-[#171717] dark:text-[#F4F0E9] leading-tight truncate max-w-[120px]">
+          <span className="font-semibold text-xs text-[#171717] dark:text-[#F4F0E9] leading-tight truncate max-w-[130px]">
             {displayName}
-          </span>
-          <span className="text-[11px] font-medium text-[#898078] dark:text-[#9A9085] leading-tight">
-            {displayRole}
           </span>
         </div>
 
@@ -159,14 +155,8 @@ export function ProfileDropdown() {
                 <div className="font-bold text-sm text-[#171717] dark:text-[#F4F0E9] truncate">
                   {displayName}
                 </div>
-                <div className="text-xs text-[#898078] dark:text-[#9A9085] truncate">
+                <div className="text-xs text-[#898078] dark:text-[#9A9085] truncate mt-0.5">
                   {email}
-                </div>
-                <div className="mt-1 flex items-center gap-1.5">
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20">
-                    <ShieldCheck className="w-3 h-3" />
-                    <span>{displayRole}</span>
-                  </span>
                 </div>
               </div>
             </div>
