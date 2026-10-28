@@ -1,9 +1,17 @@
-import NextAuth from "next-auth";
+import NextAuth, { CredentialsSignin } from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "./lib/prisma";
 import bcrypt from "bcryptjs";
 import { getFirebaseAdminAuth } from "./src/lib/firebase-admin";
+
+export class DatabaseUnavailableError extends CredentialsSignin {
+  code = "DatabaseUnavailable";
+}
+
+export class InvalidTokenError extends CredentialsSignin {
+  code = "InvalidToken";
+}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -33,19 +41,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
+        let decodedToken;
         try {
-          const decodedToken =
-            await getFirebaseAdminAuth().verifyIdToken(idToken);
-          const email = decodedToken.email?.trim().toLowerCase();
-          const firebaseUid = decodedToken.uid?.trim();
+          decodedToken = await getFirebaseAdminAuth().verifyIdToken(idToken);
+        } catch (tokenError) {
+          console.error("FIREBASE_AUTH_TOKEN_VERIFY_ERROR:", tokenError);
+          throw new InvalidTokenError();
+        }
 
-          if (!email || !firebaseUid) {
-            console.error("FIREBASE_AUTH_ERROR: Missing email or uid in token", decodedToken);
-            return null;
-          }
+        const email = decodedToken.email?.trim().toLowerCase();
+        const firebaseUid = decodedToken.uid?.trim();
 
-          console.log("FIREBASE_AUTH: Upserting user", email);
+        if (!email || !firebaseUid) {
+          console.error("FIREBASE_AUTH_ERROR: Missing email or uid in token", decodedToken);
+          return null;
+        }
 
+        console.log("FIREBASE_AUTH: Upserting user", email);
+
+        try {
           const user = await prisma.user.upsert({
             where: { email },
             update: {
@@ -90,9 +104,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             name: user.name,
             image: user.image ?? undefined,
           };
-        } catch (error) {
-          console.error("FIREBASE_AUTH_CATCH_ERROR:", error);
-          return null;
+        } catch (dbError) {
+          console.error(
+            "FIREBASE_AUTH_DATABASE_ERROR: Database unavailable or failed to upsert user. Check if PostgreSQL container is running on localhost:5433.",
+            dbError
+          );
+          throw new DatabaseUnavailableError();
         }
       },
     }),

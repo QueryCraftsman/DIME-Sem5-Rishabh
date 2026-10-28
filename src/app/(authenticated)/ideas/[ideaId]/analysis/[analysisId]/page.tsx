@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, use, useCallback } from "react";
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { useEffect, useState, useCallback } from "react";
+import { useRouter, useSearchParams, usePathname, useParams } from "next/navigation";
 import Link from "next/link";
 import { 
   BarChart3, 
@@ -34,16 +34,16 @@ import { IdeaContextualOpportunity } from "@/components/workspace/IdeaContextual
 import { IdeaAnalysisHistory } from "@/components/workspace/IdeaAnalysisHistory";
 import { IdeaContextualNotes } from "@/components/workspace/IdeaContextualNotes";
 
-export default function UnifiedIdeaWorkspacePage({
-  params,
-}: {
-  params: Promise<{ ideaId: string; analysisId: string; subtab?: string }>;
+export default function UnifiedIdeaWorkspacePage(_props: {
+  params?: Promise<{ ideaId: string; analysisId: string; subtab?: string }>;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
-  const unwrappedParams = use(params);
-  const { ideaId, analysisId, subtab } = unwrappedParams;
+  const routeParams = useParams<{ ideaId: string; analysisId: string; subtab?: string }>();
+  const ideaId = (routeParams?.ideaId as string) || "";
+  const analysisId = (routeParams?.analysisId as string) || "";
+  const subtab = routeParams?.subtab;
 
   const [analysisState, setAnalysisState] = useState<any>(null);
   const [agents, setAgents] = useState<any[]>([]);

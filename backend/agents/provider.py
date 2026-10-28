@@ -2,6 +2,7 @@
 DIME Backend - LLM Provider (Phase 10).
 """
 
+import asyncio
 import logging
 import re
 import json
@@ -110,7 +111,7 @@ class LLMProvider:
                 HumanMessage(content=prompt)
             ]
             
-            res_dict = await structured_llm.ainvoke(messages)
+            res_dict = await asyncio.wait_for(structured_llm.ainvoke(messages), timeout=50.0)
             
             # 1. Direct parsed match
             if isinstance(res_dict, dict) and res_dict.get("parsed") is not None:
@@ -134,7 +135,7 @@ class LLMProvider:
                     logger.warning(f"Failed to parse raw text into {response_model.__name__}: {parse_err}")
 
             # 3. Direct raw ainvoke fallback if needed
-            raw_invoke = await self.llm.ainvoke(messages)
+            raw_invoke = await asyncio.wait_for(self.llm.ainvoke(messages), timeout=35.0)
             if hasattr(raw_invoke, "content") and isinstance(raw_invoke.content, str):
                 return self._extract_model_from_text(raw_invoke.content, response_model)
 

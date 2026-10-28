@@ -11,13 +11,14 @@ import {
   Lightbulb, 
   Compass, 
   StickyNote, 
-  Settings2 
+  Settings2,
+  GitCompare
 } from "lucide-react";
 import { DimeLogo } from "@/components/brand/DimeLogo";
 
 interface NavItem {
   label: string;
-  iconType: "dashboard" | "validate" | "ideas" | "matrix" | "notes" | "settings";
+  iconType: "dashboard" | "validate" | "ideas" | "matrix" | "compare" | "notes" | "settings";
   href: string;
   badge?: number | string;
 }
@@ -76,6 +77,12 @@ export function Sidebar({
         pathname.startsWith("/opportunities/")
       );
     }
+    if (href === "/comparison-analysis") {
+      return (
+        pathname === "/comparison-analysis" ||
+        pathname.startsWith("/comparison-analysis/")
+      );
+    }
     if (href === "/notes") {
       return pathname === "/notes" || pathname.startsWith("/notes/");
     }
@@ -111,6 +118,11 @@ export function Sidebar({
       href: "/opportunity-matrix",
     },
     {
+      label: "Comparison Analysis",
+      iconType: "compare",
+      href: "/comparison-analysis",
+    },
+    {
       label: "Notes",
       iconType: "notes",
       href: "/notes",
@@ -128,6 +140,8 @@ export function Sidebar({
           return <Lightbulb className="w-4 h-4" />;
         case "matrix":
           return <Compass className="w-4 h-4" />;
+        case "compare":
+          return <GitCompare className="w-4 h-4" />;
         case "notes":
           return <StickyNote className="w-4 h-4" />;
         case "settings":
@@ -136,6 +150,7 @@ export function Sidebar({
           return <LayoutDashboard className="w-4 h-4" />;
       }
     };
+
 
     return (
       <div

@@ -21,6 +21,7 @@ from backend.worker.tasks import run_analysis_pipeline
 from backend.models.scoring import AnalysisScore
 from backend.models.evidence import Evidence, Finding
 from backend.models.analysis import AgentActivity, SourceIngestion
+from backend.services.overview_intelligence_service import OverviewIntelligenceService
 from sqlalchemy import select
 
 # This will be replaced with real NextAuth validation later.
@@ -270,16 +271,20 @@ async def get_analysis_report(
         select(Finding).where(Finding.analysis_id == resolved_id)
     )
     findings = finding_result.scalars().all()
+
+    evidence_result = await db.execute(
+        select(Evidence).where(Evidence.analysis_id == resolved_id)
+    )
+    evidence_list = evidence_result.scalars().all()
     
-    formatted_scores = {}
-    for score in scores:
-        formatted_scores[score.metric_name] = {
-            "score": score.score,
-            "status": score.status,
-            "explanation": score.explanation,
-            "inputs": json.loads(score.inputs) if score.inputs else None,
-            "evidence_references": json.loads(score.evidence_references) if score.evidence_references else None,
-        }
+    # Synthesize contextual, idea-isolated overview intelligence
+    overview_data = await OverviewIntelligenceService.get_or_synthesize_overview(
+        analysis=analysis,
+        db_scores=scores,
+        findings=findings,
+        evidence_list=evidence_list,
+        db=db,
+    )
         
     formatted_findings = [
         {
@@ -302,8 +307,11 @@ async def get_analysis_report(
         "target_audience": analysis.target_audience,
         "created_at": analysis.created_at.isoformat() if analysis.created_at else None,
         "completed_at": analysis.completed_at.isoformat() if analysis.completed_at else None,
-        "scores": formatted_scores,
+        "scores": overview_data["scores"],
         "findings": formatted_findings,
+        "competitors": overview_data["competitors"],
+        "strategic_gaps": overview_data["strategic_gaps"],
+        "mvp_focus": overview_data["mvp_focus"],
     }
 
 

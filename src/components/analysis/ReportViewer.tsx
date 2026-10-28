@@ -25,6 +25,13 @@ export interface ScoreData {
   explanation: string;
   inputs?: any;
   evidence_references?: string[];
+  confidence?: number;
+  confidence_label?: string;
+  index_ratio?: number;
+  signal_density?: number;
+  overlap?: number;
+  implementation_ease?: number;
+  vulnerability_score?: number;
 }
 
 export interface FindingData {
@@ -34,6 +41,36 @@ export interface FindingData {
   confidence: number;
   evidence_count: number;
   evidence_ids?: string[];
+}
+
+export interface CompetitorItem {
+  name: string;
+  classification: string;
+  overlap: number;
+  status: string;
+  url?: string;
+  strengths?: string;
+  limitations?: string;
+  evidence_count?: number;
+  color?: string;
+}
+
+export interface StrategicGapItem {
+  id: number;
+  title: string;
+  gap: string;
+  opportunity: string;
+  why_it_matters?: string;
+  evidence_count: number;
+  confidence: string;
+  limitations?: string;
+}
+
+export interface MVPFocusItem {
+  priority: string;
+  title: string;
+  description: string;
+  timeline: string;
 }
 
 export interface ReportData {
@@ -47,6 +84,9 @@ export interface ReportData {
   completed_at?: string | null;
   scores: Record<string, ScoreData>;
   findings: FindingData[];
+  competitors?: CompetitorItem[];
+  strategic_gaps?: StrategicGapItem[];
+  mvp_focus?: MVPFocusItem[];
 }
 
 interface ReportViewerProps {

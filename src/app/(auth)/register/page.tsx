@@ -102,8 +102,16 @@ export default function RegisterPage() {
       });
 
       if (result?.error) {
-        console.error("NEXTAUTH_FIREBASE_SIGNIN_ERROR", result.error);
-        setError(getGoogleServerErrorMessage(result.error));
+        let code = (result as { code?: string })?.code;
+        if (!code && result.url) {
+          try {
+            code = new URL(result.url, window.location.origin).searchParams.get("code") ?? undefined;
+          } catch {
+            // Ignore URL parsing errors
+          }
+        }
+        console.error("NEXTAUTH_FIREBASE_SIGNIN_ERROR", result.error, code);
+        setError(getGoogleServerErrorMessage(code || result.error));
         return;
       }
 

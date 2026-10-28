@@ -54,8 +54,8 @@ async def _run_analysis_pipeline_async(analysis_id: UUID) -> None:
             logger.error(f"Analysis {analysis_id} not found in database.")
             return
 
-        if analysis.status in (AnalysisStatus.RUNNING, AnalysisStatus.COMPLETED):
-            logger.info(f"Analysis {analysis_id} is already {analysis.status.value}, skipping execution.")
+        if analysis.status == AnalysisStatus.COMPLETED:
+            logger.info(f"Analysis {analysis_id} is already completed, skipping execution.")
             return
 
         try:
