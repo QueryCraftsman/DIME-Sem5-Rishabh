@@ -2,6 +2,7 @@
 DIME Backend - Competition Agent (Phase 10).
 """
 
+import asyncio
 import logging
 from backend.agents.models import CompetitionFindings, CompetitionFinding
 from backend.agents.provider import LLMProvider
@@ -22,17 +23,16 @@ class CompetitionAgent:
         self.settings = provider.settings
         self.retrieval_service = retrieval_service
 
-    async def _analyze_single_competitor_question(self, idea: dict[str, Any], question: str) -> CompetitionFindings:
-        """
-        Retrieves evidence focused on existing solutions and gets structured findings from the LLM.
-        """
-        # 1. Retrieve evidence
+    async def _retrieve_for_question(self, question: str) -> list:
+        """Retrieves evidence for a competitive question using session-bound service."""
         query = RetrievalQuery(
             query_text=question,
             top_k=self.settings.agent_retrieval_top_k
         )
-        results = await self.retrieval_service.retrieve(query)
-        
+        return await self.retrieval_service.retrieve(query)
+
+    async def _generate_for_question(self, idea: dict[str, Any], question: str, results: list) -> CompetitionFindings:
+        """Formats evidence and calls the LLM with structured outputs."""
         valid_chunk_ids = {r.chunk_id for r in results}
         
         if not results:
@@ -41,7 +41,6 @@ class CompetitionAgent:
                 gaps=[f"No evidence found for competitive question: {question}"]
             )
 
-        # 2. Format evidence
         evidence_text = "\n".join(
             f"---\nChunk ID: {r.chunk_id}\nTitle: {r.title or 'Unknown'}\nContent: {r.text}\n---"
             for r in results if r.text
@@ -59,17 +58,14 @@ Description: {idea.get('description', 'N/A')}
 {evidence_text}
 """
 
-        # 3. Generate structured response
         raw_findings = await self.provider.structured_generate(
             prompt=prompt,
             response_model=CompetitionFindings,
             system_prompt=COMPETITION_PROMPT
         )
 
-        # 4. Programmatic Validation (Grounding)
         validated_competitors = []
         for comp in raw_findings.competitors:
-            # Filter out invalid chunk IDs
             valid_refs = [ref for ref in comp.evidence_references if ref in valid_chunk_ids]
             
             if not valid_refs:
@@ -85,22 +81,37 @@ Description: {idea.get('description', 'N/A')}
     async def analyze_competition(self, idea: dict[str, Any], competitor_questions: list[str]) -> CompetitionFindings:
         """
         Processes a list of competition analysis questions.
+        Retrieval is executed safely on the session, then LLM generation is parallelized.
         """
+        questions_to_process = competitor_questions[:self.settings.agent_max_competitor_questions]
+        if not questions_to_process:
+            return CompetitionFindings(competitors=[], gaps=[])
+
+        # 1. Sequential retrieval (prevents SQLAlchemy session concurrency conflicts)
+        retrieval_pairs = []
+        for q in questions_to_process:
+            try:
+                res = await self._retrieve_for_question(q)
+                retrieval_pairs.append((q, res))
+            except Exception as e:
+                logger.error(f"Error retrieving for '{q}': {e}")
+                retrieval_pairs.append((q, []))
+
+        # 2. Concurrent LLM generation (massively speeds up the slowest step)
+        tasks = [self._generate_for_question(idea, q, res) for q, res in retrieval_pairs]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
         all_competitors = []
         all_gaps = []
-        
-        for idx, question in enumerate(competitor_questions):
-            if idx >= self.settings.agent_max_competitor_questions:
-                break
-                
-            try:
-                result = await self._analyze_single_competitor_question(idea, question)
-                all_competitors.extend(result.competitors)
-                all_gaps.extend(result.gaps)
-            except Exception as e:
-                logger.error(f"Error analyzing competitive question '{question}': {e}")
-                all_gaps.append(f"Failed to analyze question: {question}")
-                
+
+        for (q, _), res in zip(retrieval_pairs, results):
+            if isinstance(res, Exception):
+                logger.error(f"Error analyzing competitive question '{q}': {res}")
+                all_gaps.append(f"Failed to analyze question: {q}")
+            elif isinstance(res, CompetitionFindings):
+                all_competitors.extend(res.competitors)
+                all_gaps.extend(res.gaps)
+
         # Simple deduplication by competitor name to keep findings cleaner
         seen = set()
         dedup_competitors = []
@@ -109,7 +120,7 @@ Description: {idea.get('description', 'N/A')}
             if name_lower not in seen:
                 seen.add(name_lower)
                 dedup_competitors.append(comp)
-                
+
         return CompetitionFindings(
             competitors=dedup_competitors,
             gaps=all_gaps

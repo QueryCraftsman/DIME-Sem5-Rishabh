@@ -39,7 +39,10 @@ export const getGoogleClientErrorMessage = (error: unknown): string => {
 };
 
 const NEXTAUTH_GOOGLE_ERROR_MESSAGES: Record<string, string> = {
-  CredentialsSignin: "Google token verification failed. Please sign in again.",
+  CredentialsSignin: "Sign in failed on the server. Please verify PostgreSQL (port 5433) is running.",
+  DatabaseUnavailable:
+    "Database server is unreachable. Please start Docker and ensure PostgreSQL is running on port 5433.",
+  InvalidToken: "Google token verification failed. Please try signing in again.",
   CallbackRouteError:
     "Google sign-in callback failed on the server. Please try again.",
   AccessDenied: "Access denied for this Google account.",

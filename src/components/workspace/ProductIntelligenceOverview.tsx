@@ -16,7 +16,8 @@ import {
   Check,
   Target,
   BarChart3,
-  BookOpen
+  BookOpen,
+  AlertTriangle
 } from "lucide-react";
 import type { ReportData } from "@/components/analysis/ReportViewer";
 import type { EvidenceItem } from "@/components/analysis/EvidenceExplorer";
@@ -45,57 +46,54 @@ export function ProductIntelligenceOverview({
   onSwitchTab,
   onExportReport,
 }: ProductIntelligenceOverviewProps) {
-  // Extract scores with fallback defaults
-  const noveltyVal = report?.scores?.["Novelty"]?.score ?? 64;
+  // ── 1. Contextual KPI Metric Extraction (Dynamic & Isolated) ───────────────
+  const noveltyObj = report?.scores?.["Novelty"];
+  const noveltyVal = noveltyObj?.score ?? 0.50;
   const noveltyFormatted = (noveltyVal > 1 ? noveltyVal / 100 : noveltyVal).toFixed(2);
+  const noveltyRatio = noveltyObj?.index_ratio ?? Math.round(Number(noveltyFormatted) * 100);
+  const noveltyConf = noveltyObj?.confidence ?? (evidence.length > 0 ? Math.min(85, 45 + evidence.length * 3) : 50);
+  const noveltyConfLabel = noveltyObj?.confidence_label || (noveltyConf >= 80 ? "High" : noveltyConf >= 60 ? "Moderate" : "Preliminary");
 
-  const marketPainVal = report?.scores?.["Market Pain"]?.score ?? 78;
-  const saturationVal = report?.scores?.["Market Saturation"]?.score ?? 74;
-  const feasibilityVal = report?.scores?.["Feasibility"]?.score ?? 87;
-  const riskVal = report?.scores?.["Risk Indicator"]?.score ?? 42;
+  const demandObj = report?.scores?.["Market Pain"];
+  const marketPainVal = demandObj?.score ?? 50;
+  const demandDensity = demandObj?.signal_density ?? Math.round(marketPainVal);
+  const demandConf = demandObj?.confidence ?? (evidence.length > 0 ? Math.min(85, 40 + evidence.length * 3) : 48);
+  const demandConfLabel = demandObj?.confidence_label || (demandConf >= 75 ? "High" : demandConf >= 55 ? "Moderate" : "Low");
 
-  // Determine evidence categories count
-  const githubCount = evidence.filter((e) => e.evidence_type === "github" || e.source_url?.includes("github")).length || 14;
-  const researchCount = evidence.filter((e) => e.evidence_type === "research" || e.source_url?.includes("semanticscholar") || e.source_url?.includes("arxiv")).length || 6;
-  const communityCount = evidence.filter((e) => e.evidence_type === "reddit" || e.evidence_type === "blind" || e.evidence_type === "forum").length || 5;
-  const webCount = Math.max(1, evidence.length - githubCount - researchCount - communityCount) || 22;
-  const totalSources = evidence.length > 0 ? evidence.length : (githubCount + researchCount + communityCount + webCount);
+  const saturationObj = report?.scores?.["Market Saturation"];
+  const saturationVal = saturationObj?.score ?? 50;
+  const marketOverlapVal = saturationObj?.overlap ?? Math.round(saturationVal);
+  const compConf = saturationObj?.confidence ?? (report?.competitors?.length ? Math.min(88, 50 + (report.competitors.length * 8)) : 45);
+  const compConfLabel = saturationObj?.confidence_label || (compConf >= 88 ? "Very High" : compConf >= 78 ? "High" : compConf >= 60 ? "Moderate" : "Preliminary");
 
-  // Synthesized Executive summary
+  const feasibilityObj = report?.scores?.["Feasibility"];
+  const feasibilityVal = feasibilityObj?.score ?? 65;
+  const feasEase = feasibilityObj?.implementation_ease ?? Math.round(feasibilityVal);
+  const feasConf = feasibilityObj?.confidence ?? (evidence.length > 0 ? Math.min(88, 50 + evidence.length * 2) : 55);
+  const feasConfLabel = feasibilityObj?.confidence_label || (feasConf >= 78 ? "High" : feasConf >= 60 ? "Moderate" : "Preliminary");
+
+  const riskObj = report?.scores?.["Risk Indicator"];
+  const riskVal = riskObj?.score ?? 50;
+  const riskVuln = riskObj?.vulnerability_score ?? Math.round(riskVal);
+  const riskConf = riskObj?.confidence ?? Math.round(compConf * 0.3 + feasConf * 0.4 + noveltyConf * 0.3);
+  const riskConfLabel = riskObj?.confidence_label || (riskConf >= 78 ? "High" : riskConf >= 60 ? "Moderate" : "Preliminary");
+
+  // ── 2. Evidence Categorization (Strictly Authentic, No Fake Counts) ─────────
+  const githubCount = evidence.filter((e) => e.evidence_type === "github" || e.source_url?.includes("github")).length;
+  const researchCount = evidence.filter((e) => e.evidence_type === "research" || e.source_url?.includes("semanticscholar") || e.source_url?.includes("arxiv")).length;
+  const communityCount = evidence.filter((e) => e.evidence_type === "reddit" || e.evidence_type === "blind" || e.evidence_type === "forum").length;
+  const webCount = Math.max(0, evidence.length - githubCount - researchCount - communityCount);
+  const totalSources = evidence.length;
+
+  // ── 3. Synthesized Executive Summary ────────────────────────────────────────
   const synthesisFinding = report?.findings?.find((f) => f.category === "synthesis")?.description;
   const execSummary = synthesisFinding || 
-    `DIME found strong evidence of an existing market around ${domain || "this software concept"}, with multiple established solutions and several recurring user pain signals. The concept appears technically feasible, but strategic differentiation should focus on clearly identified gaps in real-time personalized feedback, deep API integrations, and workflow automation rather than generic baseline tooling.`;
+    `DIME analyzed competitive dynamics and technical feasibility around ${title}. Market signals indicate active operational interest with measurable feature differentiation opportunities across established incumbents. Technical precedents demonstrate architectural viability, while strategic white space focuses on eliminating key friction points identified in user evidence.`;
 
-  // Competitor list extraction
-  const compFindings = report?.findings?.filter((f) => f.category === "competition") || [];
-  const competitors = [
-    {
-      name: "Pramp (Exponent)",
-      classification: "Direct Peer-to-Peer",
-      overlap: 84,
-      status: "Active",
-      color: "bg-red-500",
-    },
-    {
-      name: "Interviewing.io",
-      classification: "Direct Anonymous Mock",
-      overlap: 75,
-      status: "Active",
-      color: "bg-amber-500",
-    },
-    {
-      name: "LeetCode Assessment",
-      classification: "Indirect Practice Tool",
-      overlap: 62,
-      status: "Dominant",
-      color: "bg-orange-600",
-    },
-  ];
-
-  // If specific competitor evidence was found, customize first row
-  if (compFindings.length > 0 && compFindings[0].title !== "Market Landscape") {
-    competitors[0].name = compFindings[0].title.slice(0, 24);
-  }
+  // ── 4. Dynamic Competitors & Strategic Data ─────────────────────────────────
+  const competitors = report?.competitors && report.competitors.length > 0 ? report.competitors : [];
+  const strategicGaps = report?.strategic_gaps && report.strategic_gaps.length > 0 ? report.strategic_gaps : [];
+  const mvpFocus = report?.mvp_focus && report.mvp_focus.length > 0 ? report.mvp_focus : [];
 
   return (
     <div className="space-y-6 pt-2 pb-16">
@@ -140,12 +138,14 @@ export function ProductIntelligenceOverview({
                 <span>Zero-Hallucination Lock</span>
               </div>
               <div className="text-[11px] text-text-secondary font-medium">
-                100% Citation Provenance
+                {totalSources > 0 ? "Evidence-Backed Verification" : "Preliminary Analysis"}
               </div>
             </div>
 
             <p className="text-[11px] text-text-muted mt-4 lg:mt-auto">
-              Analyzed {totalSources} external sources across GitHub, arXiv, Blind, Reddit, and web indexes.
+              {totalSources > 0 
+                ? `Analyzed ${totalSources} verified external sources across GitHub, academic papers, and web indexes.`
+                : "Awaiting source ingestion for deep evidence retrieval."}
             </p>
           </div>
         </div>
@@ -164,16 +164,18 @@ export function ProductIntelligenceOverview({
             <span className="text-xs text-text-muted">/ 1.00</span>
           </div>
           <div className="inline-block px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-800/40">
-            {Number(noveltyFormatted) > 0.6 ? "High Distinctiveness" : "Medium Overlap"}
+            {Number(noveltyFormatted) >= 0.65 ? "High Distinctiveness" : Number(noveltyFormatted) >= 0.40 ? "Moderate Overlap" : "High Incumbent Saturation"}
           </div>
           <div className="pt-2 border-t border-border-default text-[11px] text-text-secondary space-y-0.5">
             <div className="flex justify-between">
               <span>Index Ratio</span>
-              <span className="font-semibold text-text-strong">{Math.round(Number(noveltyFormatted) * 100)}%</span>
+              <span className="font-semibold text-text-strong">{noveltyRatio}%</span>
             </div>
             <div className="flex justify-between">
               <span>Confidence</span>
-              <span className="font-semibold text-emerald-600">82% (High)</span>
+              <span className={`font-semibold ${noveltyConf >= 75 ? "text-emerald-600" : "text-amber-600"}`}>
+                {noveltyConf}% ({noveltyConfLabel})
+              </span>
             </div>
           </div>
         </div>
@@ -189,16 +191,18 @@ export function ProductIntelligenceOverview({
             <span className="text-xs text-text-muted">/ 100</span>
           </div>
           <div className="inline-block px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800/40">
-            {marketPainVal > 70 ? "High User Demand" : "Moderate Demand"}
+            {marketPainVal >= 70 ? "High User Demand" : marketPainVal >= 40 ? "Moderate Demand" : "Niche / Emerging"}
           </div>
           <div className="pt-2 border-t border-border-default text-[11px] text-text-secondary space-y-0.5">
             <div className="flex justify-between">
               <span>Signal Density</span>
-              <span className="font-semibold text-text-strong">{Math.round(marketPainVal)}%</span>
+              <span className="font-semibold text-text-strong">{demandDensity}%</span>
             </div>
             <div className="flex justify-between">
               <span>Confidence</span>
-              <span className="font-semibold text-text-strong">79%</span>
+              <span className={`font-semibold ${demandConf >= 75 ? "text-emerald-600" : "text-amber-600"}`}>
+                {demandConf}% ({demandConfLabel})
+              </span>
             </div>
           </div>
         </div>
@@ -210,19 +214,21 @@ export function ProductIntelligenceOverview({
             <Users className="w-4 h-4 text-amber-500" />
           </div>
           <div className="flex items-baseline gap-1.5">
-            <span className="text-2xl font-bold text-text-strong tracking-tight">{Math.round(saturationVal)}%</span>
+            <span className="text-2xl font-bold text-text-strong tracking-tight">{marketOverlapVal}%</span>
           </div>
           <div className="inline-block px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800/40">
-            {saturationVal > 70 ? "Crowded Space" : saturationVal > 40 ? "Moderate Moat" : "Blue Ocean"}
+            {marketOverlapVal >= 75 ? "Crowded Space" : marketOverlapVal >= 50 ? "Moderate Moat" : "Blue Ocean"}
           </div>
           <div className="pt-2 border-t border-border-default text-[11px] text-text-secondary space-y-0.5">
             <div className="flex justify-between">
               <span>Market Overlap</span>
-              <span className="font-semibold text-text-strong">{Math.round(saturationVal)}%</span>
+              <span className="font-semibold text-text-strong">{marketOverlapVal}%</span>
             </div>
             <div className="flex justify-between">
               <span>Confidence</span>
-              <span className="font-semibold text-emerald-600">91% (Very High)</span>
+              <span className={`font-semibold ${compConf >= 85 ? "text-emerald-600" : "text-amber-600"}`}>
+                {compConf}% ({compConfLabel})
+              </span>
             </div>
           </div>
         </div>
@@ -238,16 +244,18 @@ export function ProductIntelligenceOverview({
             <span className="text-xs text-text-muted">/ 100</span>
           </div>
           <div className="inline-block px-2 py-0.5 rounded text-[11px] font-semibold bg-teal-50 text-teal-700 border border-teal-200 dark:bg-teal-950/40 dark:text-teal-400 dark:border-teal-800/40">
-            Proven Architecture
+            {feasibilityVal >= 75 ? "Proven Architecture" : feasibilityVal >= 50 ? "Moderate Complexity" : "Research Intensive"}
           </div>
           <div className="pt-2 border-t border-border-default text-[11px] text-text-secondary space-y-0.5">
             <div className="flex justify-between">
               <span>Implementation Ease</span>
-              <span className="font-semibold text-text-strong">{Math.round(feasibilityVal)}%</span>
+              <span className="font-semibold text-text-strong">{feasEase}%</span>
             </div>
             <div className="flex justify-between">
               <span>Confidence</span>
-              <span className="font-semibold text-text-strong">87%</span>
+              <span className={`font-semibold ${feasConf >= 75 ? "text-emerald-600" : "text-amber-600"}`}>
+                {feasConf}% ({feasConfLabel})
+              </span>
             </div>
           </div>
         </div>
@@ -263,22 +271,24 @@ export function ProductIntelligenceOverview({
             <span className="text-xs text-text-muted">/ 100</span>
           </div>
           <div className="inline-block px-2 py-0.5 rounded text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-800/40">
-            Moderate Moat Risk
+            {riskVal >= 65 ? "Elevated Defensive Risk" : riskVal >= 40 ? "Moderate Moat Risk" : "Low Execution Risk"}
           </div>
           <div className="pt-2 border-t border-border-default text-[11px] text-text-secondary space-y-0.5">
             <div className="flex justify-between">
               <span>Vulnerability Score</span>
-              <span className="font-semibold text-text-strong">{Math.round(riskVal)}%</span>
+              <span className="font-semibold text-text-strong">{riskVuln}%</span>
             </div>
             <div className="flex justify-between">
               <span>Confidence</span>
-              <span className="font-semibold text-text-strong">76%</span>
+              <span className={`font-semibold ${riskConf >= 75 ? "text-emerald-600" : "text-amber-600"}`}>
+                {riskConf}% ({riskConfLabel})
+              </span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 3. Main 2-Column Section (Matching Image 2) */}
+      {/* 3. Main 2-Column Section */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Column: Strategic Differentiation & Top Competitors (7 cols) */}
         <div className="lg:col-span-7 space-y-6">
@@ -290,68 +300,48 @@ export function ProductIntelligenceOverview({
                 <h3 className="text-base font-bold text-text-strong">Strategic Differentiation & White Space</h3>
               </div>
               <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-canvas-bg border border-border-default text-text-muted">
-                3 Key Gaps Isolated
+                {strategicGaps.length} Key Gap{strategicGaps.length === 1 ? "" : "s"} Isolated
               </span>
             </div>
 
-            <div className="space-y-4">
-              {/* Gap 1 */}
-              <div className="p-4 rounded-xl bg-canvas-bg/60 border border-border-default space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="w-5 h-5 rounded-full bg-orange-100 text-primary font-bold text-xs flex items-center justify-center">
-                      1
-                    </span>
-                    <h4 className="text-sm font-bold text-text-strong">Real-Time System Design Feedback</h4>
-                  </div>
-                  <span className="text-[11px] text-text-muted font-medium">Evidence: 12 sources</span>
-                </div>
-                <p className="text-xs text-text-secondary leading-relaxed">
-                  Existing platforms focus overwhelmingly on deterministic syntax and algorithm pass/fail unit tests. High unmet need in voice-evaluated architectural critique, trade-off interrogation (CAP theorem, cache invalidation), and unscripted dialogue.
+            {strategicGaps.length === 0 ? (
+              <div className="p-6 rounded-xl border border-dashed border-border-default text-center space-y-2">
+                <AlertTriangle className="w-6 h-6 text-amber-500 mx-auto" />
+                <h4 className="text-xs font-bold text-text-strong">No Validated Strategic Gaps Isolated</h4>
+                <p className="text-xs text-text-secondary max-w-md mx-auto">
+                  Differentiation analysis requires additional competitive citations or problem signals to isolate defensible white space.
                 </p>
-                <div className="p-2 rounded-lg bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800/40 text-[11px] font-medium text-orange-800 dark:text-orange-300">
-                  <span className="font-bold">OPPORTUNITY:</span> Audio stream evaluation with multi-modal whiteboard canvas scoring.
-                </div>
               </div>
-
-              {/* Gap 2 */}
-              <div className="p-4 rounded-xl bg-canvas-bg/60 border border-border-default space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="w-5 h-5 rounded-full bg-orange-100 text-primary font-bold text-xs flex items-center justify-center">
-                      2
-                    </span>
-                    <h4 className="text-sm font-bold text-text-strong">Personalized Anxiety & Behavioral Coaching</h4>
+            ) : (
+              <div className="space-y-4">
+                {strategicGaps.map((gap, idx) => (
+                  <div key={gap.id || idx} className="p-4 rounded-xl bg-canvas-bg/60 border border-border-default space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="w-5 h-5 rounded-full bg-orange-100 text-primary font-bold text-xs flex items-center justify-center shrink-0">
+                          {idx + 1}
+                        </span>
+                        <h4 className="text-sm font-bold text-text-strong">{gap.title}</h4>
+                      </div>
+                      <span className="text-[11px] text-text-muted font-medium shrink-0">
+                        Evidence: {gap.evidence_count} sources
+                      </span>
+                    </div>
+                    <p className="text-xs text-text-secondary leading-relaxed">
+                      {gap.gap}
+                    </p>
+                    <div className="p-2 rounded-lg bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800/40 text-[11px] font-medium text-orange-800 dark:text-orange-300">
+                      <span className="font-bold">OPPORTUNITY:</span> {gap.opportunity}
+                    </div>
+                    {gap.limitations && (
+                      <p className="text-[10px] text-text-muted italic pt-0.5">
+                        <span className="font-semibold not-italic">Limitation:</span> {gap.limitations}
+                      </p>
+                    )}
                   </div>
-                  <span className="text-[11px] text-text-muted font-medium">Evidence: 8 sources</span>
-                </div>
-                <p className="text-xs text-text-secondary leading-relaxed">
-                  High user pain point around confidence, speech cadence, filler words, and structured STAR response formats (Situation, Task, Action, Result). Incumbents provide passive post-session advice rather than corrective real-time simulation.
-                </p>
-                <div className="p-2 rounded-lg bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800/40 text-[11px] font-medium text-orange-800 dark:text-orange-300">
-                  <span className="font-bold">OPPORTUNITY:</span> Acoustic pause analysis and automated STAR-structure completeness scoring.
-                </div>
+                ))}
               </div>
-
-              {/* Gap 3 */}
-              <div className="p-4 rounded-xl bg-canvas-bg/60 border border-border-default space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="w-5 h-5 rounded-full bg-orange-100 text-primary font-bold text-xs flex items-center justify-center">
-                      3
-                    </span>
-                    <h4 className="text-sm font-bold text-text-strong">Direct ATS & Resume Contextualization</h4>
-                  </div>
-                  <span className="text-[11px] text-text-muted font-medium">Evidence: 7 sources</span>
-                </div>
-                <p className="text-xs text-text-secondary leading-relaxed">
-                  Current tools ask static question pools. Candidates express frustration that mock drills don’t probe their actual past projects, specific tech stacks (e.g., Kafka vs RabbitMQ), or resume claims.
-                </p>
-                <div className="p-2 rounded-lg bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800/40 text-[11px] font-medium text-orange-800 dark:text-orange-300">
-                  <span className="font-bold">OPPORTUNITY:</span> Resume PDF vectorization to generate tailored, skeptical behavioral follow-ups.
-                </div>
-              </div>
-            </div>
+            )}
           </div>
 
           {/* Card: Top Competitors Discovered */}
@@ -366,50 +356,74 @@ export function ProductIntelligenceOverview({
                 onClick={() => onSwitchTab("competition")}
                 className="text-xs font-semibold text-primary hover:underline flex items-center gap-1 cursor-pointer"
               >
-                <span>View Full Matrix (14)</span>
+                <span>View Full Matrix ({competitors.length})</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="border-b border-border-default text-text-muted uppercase tracking-wider font-semibold">
-                    <th className="pb-2.5 font-semibold">Entity Name</th>
-                    <th className="pb-2.5 font-semibold">Classification</th>
-                    <th className="pb-2.5 font-semibold">Feature Overlap</th>
-                    <th className="pb-2.5 font-semibold text-right">Market Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border-default">
-                  {competitors.map((c, idx) => (
-                    <tr key={idx} className="group hover:bg-canvas-bg/50 transition-colors">
-                      <td className="py-3 font-semibold text-text-strong flex items-center gap-2">
-                        <span className="w-6 h-6 rounded bg-slate-100 dark:bg-slate-800 text-text-secondary text-[10px] font-bold flex items-center justify-center border border-border-default">
-                          {c.name[0]}
-                        </span>
-                        <span>{c.name}</span>
-                      </td>
-                      <td className="py-3 text-text-secondary">{c.classification}</td>
-                      <td className="py-3">
-                        <div className="flex items-center gap-2 w-32">
-                          <div className="flex-1 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                            <div className={`h-full ${c.color} rounded-full`} style={{ width: `${c.overlap}%` }} />
-                          </div>
-                          <span className="font-semibold text-text-strong text-[11px]">{c.overlap}%</span>
-                        </div>
-                      </td>
-                      <td className="py-3 text-right">
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800/40">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                          {c.status}
-                        </span>
-                      </td>
+            {competitors.length === 0 ? (
+              <div className="p-6 rounded-xl border border-dashed border-border-default text-center space-y-2">
+                <Users className="w-6 h-6 text-text-muted mx-auto" />
+                <h4 className="text-xs font-bold text-text-strong">No Direct Competitors Identified Yet</h4>
+                <p className="text-xs text-text-secondary max-w-md mx-auto">
+                  Live research ingestion is active. Discovered solutions will be classified and indexed automatically.
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="border-b border-border-default text-text-muted uppercase tracking-wider font-semibold">
+                      <th className="pb-2.5 font-semibold">Entity Name</th>
+                      <th className="pb-2.5 font-semibold">Classification</th>
+                      <th className="pb-2.5 font-semibold">Feature Overlap</th>
+                      <th className="pb-2.5 font-semibold text-right">Market Status</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-border-default">
+                    {competitors.map((c, idx) => (
+                      <tr key={idx} className="group hover:bg-canvas-bg/50 transition-colors">
+                        <td className="py-3 font-semibold text-text-strong flex items-center gap-2">
+                          <span className="w-6 h-6 rounded bg-slate-100 dark:bg-slate-800 text-text-secondary text-[10px] font-bold flex items-center justify-center border border-border-default shrink-0">
+                            {c.name ? c.name[0] : "?"}
+                          </span>
+                          <span className="truncate max-w-[180px]">{c.name}</span>
+                          {c.url && (
+                            <a 
+                              href={c.url} 
+                              target="_blank" 
+                              rel="noopener noreferrer" 
+                              className="text-text-muted hover:text-primary transition-colors"
+                              title="Visit competitor site"
+                            >
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          )}
+                        </td>
+                        <td className="py-3 text-text-secondary">{c.classification}</td>
+                        <td className="py-3">
+                          <div className="flex items-center gap-2 w-32">
+                            <div className="flex-1 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                              <div 
+                                className={`h-full ${c.color || (c.overlap >= 75 ? "bg-red-500" : c.overlap >= 60 ? "bg-amber-500" : "bg-blue-500")} rounded-full`} 
+                                style={{ width: `${Math.min(100, Math.max(0, c.overlap))}%` }} 
+                              />
+                            </div>
+                            <span className="font-semibold text-text-strong text-[11px]">{c.overlap}%</span>
+                          </div>
+                        </td>
+                        <td className="py-3 text-right">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800/40">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                            {c.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
 
@@ -427,55 +441,47 @@ export function ProductIntelligenceOverview({
               </span>
             </div>
 
-            <div className="space-y-3">
-              {/* P0 */}
-              <div className="p-3.5 rounded-xl border border-red-200 bg-red-50/40 dark:bg-red-950/20 dark:border-red-900/40 space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-red-600 text-white uppercase tracking-wider">
-                    P0 Must Have
-                  </span>
-                  <span className="text-[10px] text-text-muted font-medium">Execution: Sprint 1–3</span>
-                </div>
-                <h4 className="text-xs font-bold text-text-strong">
-                  Audio transcription + LLM architectural evaluation
-                </h4>
-                <p className="text-[11px] text-text-secondary leading-relaxed">
-                  Whisper API for ultra-low latency transcription paired with structured rubrics for STAR formatting and high-level architectural decomposition.
-                </p>
+            {mvpFocus.length === 0 ? (
+              <div className="p-4 rounded-xl border border-dashed border-border-default text-center text-xs text-text-muted">
+                Synthesizing architectural roadmap from validated user requirements...
               </div>
-
-              {/* P1 */}
-              <div className="p-3.5 rounded-xl border border-amber-200 bg-amber-50/40 dark:bg-amber-950/20 dark:border-amber-900/40 space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-600 text-white uppercase tracking-wider">
-                    P1 Should Have
-                  </span>
-                  <span className="text-[10px] text-text-muted font-medium">Sprint 4–5</span>
-                </div>
-                <h4 className="text-xs font-bold text-text-strong">
-                  Resume PDF parsing & multi-session progress
-                </h4>
-                <p className="text-[11px] text-text-secondary leading-relaxed">
-                  Contextual grounding using candidate work history and tracking hesitation frequency over recurring mock runs.
-                </p>
+            ) : (
+              <div className="space-y-3">
+                {mvpFocus.map((item, idx) => {
+                  const isP0 = item.priority === "P0";
+                  const isP1 = item.priority === "P1";
+                  return (
+                    <div 
+                      key={idx} 
+                      className={`p-3.5 rounded-xl border space-y-1.5 ${
+                        isP0 
+                          ? "border-red-200 bg-red-50/40 dark:bg-red-950/20 dark:border-red-900/40"
+                          : isP1
+                          ? "border-amber-200 bg-amber-50/40 dark:bg-amber-950/20 dark:border-amber-900/40"
+                          : "border-slate-200 bg-canvas-bg/60 dark:border-slate-800"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span 
+                          className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider text-white ${
+                            isP0 ? "bg-red-600" : isP1 ? "bg-amber-600" : "bg-slate-600"
+                          }`}
+                        >
+                          {isP0 ? "P0 Must Have" : isP1 ? "P1 Should Have" : "P2 Defer"}
+                        </span>
+                        <span className="text-[10px] text-text-muted font-medium">{item.timeline}</span>
+                      </div>
+                      <h4 className="text-xs font-bold text-text-strong">
+                        {item.title}
+                      </h4>
+                      <p className="text-[11px] text-text-secondary leading-relaxed">
+                        {item.description}
+                      </p>
+                    </div>
+                  );
+                })}
               </div>
-
-              {/* P2 */}
-              <div className="p-3.5 rounded-xl border border-slate-200 bg-canvas-bg/60 dark:border-slate-800 space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-600 text-white uppercase tracking-wider">
-                    P2 Defer
-                  </span>
-                  <span className="text-[10px] text-text-muted font-medium">Post-PMF</span>
-                </div>
-                <h4 className="text-xs font-bold text-text-strong">
-                  Custom fine-tuned speech models & video emotion
-                </h4>
-                <p className="text-[11px] text-text-secondary leading-relaxed">
-                  High compute overhead with minimal incremental signal value for early technical hiring loops.
-                </p>
-              </div>
-            </div>
+            )}
           </div>
 
           {/* Card: Evidence Provenance */}
@@ -505,12 +511,12 @@ export function ProductIntelligenceOverview({
                 <div className="text-sm font-bold text-text-strong mt-0.5">{webCount} sites</div>
               </div>
               <div className="p-2.5 rounded-lg border border-border-default bg-surface-white">
-                <div className="text-[10px] font-semibold text-text-muted uppercase">arXiv Research</div>
+                <div className="text-[10px] font-semibold text-text-muted uppercase">Academic Research</div>
                 <div className="text-sm font-bold text-text-strong mt-0.5">{researchCount} papers</div>
               </div>
               <div className="p-2.5 rounded-lg border border-border-default bg-surface-white">
-                <div className="text-[10px] font-semibold text-text-muted uppercase">Community Blind/Reddit</div>
-                <div className="text-sm font-bold text-text-strong mt-0.5">{communityCount} clusters</div>
+                <div className="text-[10px] font-semibold text-text-muted uppercase">Community Signals</div>
+                <div className="text-sm font-bold text-text-strong mt-0.5">{communityCount} signals</div>
               </div>
             </div>
 

@@ -55,6 +55,7 @@ model User {
   datasets      UserDataset[]
   notifications Notification[]
   preference    UserPreference?
+  comparisons   ComparisonReport[]
 }
 
 model VerificationToken {
@@ -98,6 +99,7 @@ model Idea {
 
   notes Note[]
   tasks WorkspaceTask[]
+  comparisonCandidates ComparisonCandidate[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -186,4 +188,56 @@ model Notification {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, read, createdAt])
+}
+
+model ComparisonReport {
+  id                 String                @id @default(cuid())
+  reportNumber       Int                   @default(autoincrement())
+  userId             String
+  title              String
+  description        String?               @db.Text
+  objective          String                @default("Choose the best opportunity for an MVP")
+  status             String                @default("COMPLETED") // DRAFT, RUNNING, COMPLETED, FAILED
+  methodologyVersion String                @default("Multi-Vector Pareto Synthesis v3.4")
+  selectedWeights    String?               @db.Text // JSON string
+  recommendation     String?               @db.Text // JSON string
+  paretoFrontier     String?               @db.Text // JSON string
+  dataComparability  String?               @db.Text // JSON string
+  executiveTakeaway  String?               @db.Text // JSON string
+  candidatesCount    Int                   @default(2)
+  durationMs         Int?
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  completedAt        DateTime?
+
+  user               User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  candidates         ComparisonCandidate[]
+
+  @@index([userId, createdAt])
+  @@index([status])
+}
+
+model ComparisonCandidate {
+  id                String           @id @default(cuid())
+  comparisonId      String
+  ideaId            String
+  analysisId        String
+  candidatePosition Int              // 1, 2, 3, 4
+  ideaTitle         String
+  ideaDomain        String?
+  ideaDescription   String?          @db.Text
+  analysisScore     Float?
+  scores            String?          @db.Text // JSON string of normalized metric vectors
+  strengths         String?          @db.Text // JSON string
+  vulnerabilities   String?          @db.Text // JSON string
+  tradeoffs         String?          @db.Text // JSON string
+  sourcesCount      Int              @default(0)
+  analyzedAt        DateTime?
+  createdAt         DateTime         @default(now())
+
+  comparison        ComparisonReport @relation(fields: [comparisonId], references: [id], onDelete: Cascade)
+  idea              Idea             @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+
+  @@unique([comparisonId, ideaId])
+  @@index([comparisonId, candidatePosition])
 }

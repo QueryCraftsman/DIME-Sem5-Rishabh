@@ -22,3 +22,7 @@ api_v1_router.include_router(analyses.router, prefix="/analyses", tags=["analyse
 from backend.api.v1 import ideas
 api_v1_router.include_router(ideas.router, prefix="/ideas", tags=["ideas"])
 
+from backend.api.v1 import comparisons
+api_v1_router.include_router(comparisons.router, prefix="/comparisons", tags=["comparisons"])
+
+

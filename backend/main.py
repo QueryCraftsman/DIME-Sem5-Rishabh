@@ -70,6 +70,15 @@ def create_app() -> FastAPI:
     )
 
     # ── Exception handlers ────────────────────────────────────
+    def _cors_headers(request: Request) -> dict[str, str]:
+        origin = request.headers.get("origin")
+        if origin and (origin in settings.cors_origins or "*" in settings.cors_origins):
+            return {
+                "Access-Control-Allow-Origin": origin,
+                "Access-Control-Allow-Credentials": "true",
+            }
+        return {}
+
     @app.exception_handler(DimeError)
     async def dime_error_handler(request: Request, exc: DimeError) -> JSONResponse:
         return JSONResponse(
@@ -79,6 +88,7 @@ def create_app() -> FastAPI:
                 "message": exc.message,
                 "detail": exc.detail,
             },
+            headers=_cors_headers(request),
         )
 
     @app.exception_handler(Exception)
@@ -93,6 +103,7 @@ def create_app() -> FastAPI:
                 "message": "An unexpected error occurred",
                 "detail": {},
             },
+            headers=_cors_headers(request),
         )
 
     # ── Routes ────────────────────────────────────────────────

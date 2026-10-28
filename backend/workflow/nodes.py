@@ -53,6 +53,34 @@ from backend.core.retrieval.reranker import CrossEncoderReranker
 
 logger = logging.getLogger(__name__)
 
+_shared_provider: Any = None
+_shared_qdrant: Any = None
+_shared_reranker: Any = None
+
+
+def _get_shared_embedding_provider() -> Any:
+    global _shared_provider
+    if _shared_provider is None:
+        from backend.core.embeddings import SentenceTransformerProvider
+        _shared_provider = SentenceTransformerProvider()
+    return _shared_provider
+
+
+def _get_shared_qdrant() -> Any:
+    global _shared_qdrant
+    if _shared_qdrant is None:
+        from backend.core.qdrant import QdrantStore
+        provider = _get_shared_embedding_provider()
+        _shared_qdrant = QdrantStore(dimension=provider.dimension)
+    return _shared_qdrant
+
+
+def _get_shared_reranker() -> Any:
+    global _shared_reranker
+    if _shared_reranker is None:
+        _shared_reranker = CrossEncoderReranker()
+    return _shared_reranker
+
 
 def node_with_error_handling(
     stage_name: str, progress_val: int
@@ -107,10 +135,8 @@ async def initialize_node(state: AnalysisState) -> dict[str, Any]:
     publisher = ProgressPublisher(state["analysis_id"])
 
     try:
-        from backend.core.embeddings import SentenceTransformerProvider
-        from backend.core.qdrant import QdrantStore
-        provider = SentenceTransformerProvider()
-        qdrant = QdrantStore(dimension=provider.dimension)
+        provider = _get_shared_embedding_provider()
+        qdrant = _get_shared_qdrant()
         await qdrant.ensure_collection()
         await publisher.publish_agent_activity(
             agent_name="System",
@@ -506,18 +532,16 @@ async def process_evidence_node(state: AnalysisState) -> dict[str, Any]:
     return {"evidence_references": saved_doc_ids, "_raw_documents": None}
 
 
+
+
 def _build_retrieval_service(session: Any) -> RetrievalService:
-    """Helper to construct the E2E Retrieval Service."""
-    from backend.core.embeddings import SentenceTransformerProvider
-    from backend.core.qdrant import QdrantStore
-    
-    provider = SentenceTransformerProvider()
-    qdrant = QdrantStore(dimension=provider.dimension)
-    
+    """Helper to construct the E2E Retrieval Service using cached ML model singletons."""
+    provider = _get_shared_embedding_provider()
+    qdrant = _get_shared_qdrant()
     dense = DenseRetriever(provider, qdrant)
     sparse = SparseRetriever(session)
     hybrid = HybridRetriever()
-    reranker = CrossEncoderReranker()
+    reranker = _get_shared_reranker()
     return RetrievalService(dense, sparse, hybrid, reranker)
 
 
@@ -649,19 +673,15 @@ async def synthesis_node(state: AnalysisState) -> dict[str, Any]:
 @node_with_error_handling("SCORING", 95)
 async def scoring_node(state: AnalysisState) -> dict[str, Any]:
     """Execute the Deterministic Scoring Engine and persist scores."""
-    from backend.core.embeddings import SentenceTransformerProvider
-    from backend.core.qdrant import QdrantStore
-    
     publisher = ProgressPublisher(state["analysis_id"])
-
     await publisher.publish_agent_activity(
         agent_name="Scoring Engine",
         action="Computing deterministic scores: Novelty, Market Saturation, Pain, Feasibility, Opportunity, Risk",
         status="running",
     )
 
-    provider = SentenceTransformerProvider()
-    qdrant = QdrantStore(dimension=provider.dimension)
+    provider = _get_shared_embedding_provider()
+    qdrant = _get_shared_qdrant()
     dense_retriever = DenseRetriever(provider, qdrant)
     
     engine = ScoringEngine(dense_retriever)
