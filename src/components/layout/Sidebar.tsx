@@ -15,6 +15,7 @@ import {
   GitCompare
 } from "lucide-react";
 import { DimeLogo } from "@/components/brand/DimeLogo";
+import { getUserDisplayName, getUserInitials } from "@/lib/user-profile";
 
 interface NavItem {
   label: string;
@@ -165,13 +166,8 @@ export function Sidebar({
     );
   };
 
-  const displayName = session?.user?.name || "Vivek Chaurasiya";
-  const userInitials = displayName
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
+  const displayName = getUserDisplayName(session?.user?.name, session?.user?.email);
+  const userInitials = getUserInitials(displayName);
 
   return (
     <>
@@ -226,6 +222,7 @@ export function Sidebar({
                 type="button"
                 id="sidebar-toggle-btn"
                 onClick={() => setIsOpen(false)}
+                suppressHydrationWarning
                 className="h-8 w-8 rounded-lg border border-[#E8E1D8] dark:border-[#34302B] bg-[#FDFBF8] dark:bg-[#201E1B] hover:bg-[#EFEAE2] dark:hover:bg-[#26231F] text-[#776E65] dark:text-[#C1B8AD] hover:text-[#171717] dark:hover:text-[#F4F0E9] shadow-xs active:scale-95 transition-all duration-150 shrink-0 flex items-center justify-center cursor-pointer group"
                 title="Collapse sidebar"
                 aria-label="Collapse sidebar"
@@ -413,9 +410,11 @@ export function Sidebar({
                 <span className="text-xs font-bold text-[#171717] dark:text-[#F4F0E9] truncate">
                   {displayName}
                 </span>
-                <span className="text-[10px] text-[#898078] dark:text-[#9A9085] truncate max-w-[170px]">
-                  {session?.user?.email || "vivekchaurasiya943@gmail.com"}
-                </span>
+                {session?.user?.email && (
+                  <span className="text-[10px] text-[#898078] dark:text-[#9A9085] truncate max-w-[170px]">
+                    {session.user.email}
+                  </span>
+                )}
               </div>
             </div>
           ) : (

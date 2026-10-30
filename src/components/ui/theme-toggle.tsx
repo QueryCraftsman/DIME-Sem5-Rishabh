@@ -26,6 +26,7 @@ export function ThemeToggle({ className = "", showLabel = false }: ThemeTogglePr
       type="button"
       onClick={toggleTheme}
       id="theme-toggle-btn"
+      suppressHydrationWarning
       className={`relative inline-flex items-center justify-center p-2 rounded-xl text-[#776E65] dark:text-[#C1B8AD] hover:text-[#171717] dark:hover:text-[#F4F0E9] hover:bg-[#EFEAE2] dark:hover:bg-[#26231F] border border-transparent hover:border-[#E8E1D8] dark:hover:border-[#34302B] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 active:scale-95 transition-all duration-200 cursor-pointer group shrink-0 ${className}`}
       title={label}
       aria-label={label}

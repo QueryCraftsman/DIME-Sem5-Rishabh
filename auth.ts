@@ -142,6 +142,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           id: user.id,
           email: user.email,
           name: user.name,
+          image: user.image ?? undefined,
         };
       },
     }),
@@ -150,9 +151,23 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     signIn: "/login",
   },
   callbacks: {
+    jwt({ token, user }) {
+      if (user) {
+        token.sub = user.id;
+        if (user.image) {
+          token.picture = user.image;
+        }
+      }
+      return token;
+    },
     session({ session, token }) {
-      if (session.user && token.sub) {
-        session.user.id = token.sub;
+      if (session.user) {
+        if (token.sub) {
+          session.user.id = token.sub;
+        }
+        if (token.picture) {
+          session.user.image = token.picture as string;
+        }
       }
       return session;
     },

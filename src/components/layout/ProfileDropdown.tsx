@@ -28,6 +28,7 @@ export function ProfileDropdown() {
     image?: string | null;
   } | null>(null);
 
+  const [imageError, setImageError] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Sync profile on mount
@@ -48,18 +49,23 @@ export function ProfileDropdown() {
 
   const displayName =
     backendUser?.name ||
+    session?.user?.name ||
     getUserDisplayName(session?.user?.name, session?.user?.email) ||
-    "Vivek Chaurasiya";
+    "User";
   const email =
     backendUser?.email ||
     session?.user?.email ||
-    "vivekchaurasiya943@gmail.com";
+    "";
   const avatarUrl = getUserAvatarUrl(
     backendUser?.image || session?.user?.image,
     email,
     displayName
   );
   const initials = getUserInitials(displayName);
+
+  useEffect(() => {
+    setImageError(false);
+  }, [avatarUrl]);
 
   // Close on Escape or click outside
   useEffect(() => {
@@ -91,6 +97,8 @@ export function ProfileDropdown() {
     await signOut({ callbackUrl: "/login" });
   };
 
+  const showImage = Boolean(avatarUrl && !imageError);
+
   return (
     <div className="relative" ref={dropdownRef}>
       {/* Trigger Button */}
@@ -101,19 +109,17 @@ export function ProfileDropdown() {
         aria-haspopup="menu"
         aria-expanded={isOpen}
         onClick={() => setIsOpen(!isOpen)}
+        suppressHydrationWarning
         className="flex items-center gap-2.5 sm:gap-3 p-1.5 rounded-xl border border-transparent hover:border-[#EAE4DC] dark:hover:border-[#34302B] hover:bg-[#FAF7F2] dark:hover:bg-[#201E1B] transition-all cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/20"
       >
         {/* Avatar Image with Initials Fallback */}
-        <div className="relative w-8 h-8 rounded-full overflow-hidden border border-[#EAE4DC] dark:border-[#34302B] bg-[#EFEAE2] dark:bg-[#26231F] flex items-center justify-center shrink-0 shadow-xs">
-          {avatarUrl ? (
+        <div className="relative w-8 h-8 rounded-full overflow-hidden border border-[#EAE4DC] dark:border-[#34302B] bg-primary/10 dark:bg-primary/20 flex items-center justify-center shrink-0 shadow-xs">
+          {showImage ? (
             <img
-              src={avatarUrl}
+              src={avatarUrl!}
               alt={displayName}
               className="w-full h-full object-cover"
-              onError={(e) => {
-                // If avatar image fails to load, fallback to initials
-                e.currentTarget.style.display = "none";
-              }}
+              onError={() => setImageError(true)}
             />
           ) : (
             <span className="text-xs font-bold text-primary">{initials}</span>
@@ -144,9 +150,14 @@ export function ProfileDropdown() {
           {/* Header with Account Details */}
           <div className="px-4 py-3 border-b border-[#EAE4DC] dark:border-[#2E2A25] bg-[#FAF7F2] dark:bg-[#1A1816]/70">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full overflow-hidden border border-[#EAE4DC] dark:border-[#34302B] bg-[#EFEAE2] dark:bg-[#26231F] flex items-center justify-center shrink-0">
-                {avatarUrl ? (
-                  <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
+              <div className="w-10 h-10 rounded-full overflow-hidden border border-[#EAE4DC] dark:border-[#34302B] bg-primary/10 dark:bg-primary/20 flex items-center justify-center shrink-0">
+                {showImage ? (
+                  <img
+                    src={avatarUrl!}
+                    alt={displayName}
+                    className="w-full h-full object-cover"
+                    onError={() => setImageError(true)}
+                  />
                 ) : (
                   <span className="text-sm font-bold text-primary">{initials}</span>
                 )}
@@ -155,9 +166,11 @@ export function ProfileDropdown() {
                 <div className="font-bold text-sm text-[#171717] dark:text-[#F4F0E9] truncate">
                   {displayName}
                 </div>
-                <div className="text-xs text-[#898078] dark:text-[#9A9085] truncate mt-0.5">
-                  {email}
-                </div>
+                {email && (
+                  <div className="text-xs text-[#898078] dark:text-[#9A9085] truncate mt-0.5">
+                    {email}
+                  </div>
+                )}
               </div>
             </div>
           </div>

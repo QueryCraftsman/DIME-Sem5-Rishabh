@@ -29,13 +29,18 @@ export const getUserInitials = (value?: string | null) => {
 
 export const getUserAvatarUrl = (
   image?: string | null,
-  email?: string | null,
-  name?: string | null,
-) => {
-  if (image && image.trim()) {
-    return image;
+  _email?: string | null,
+  _name?: string | null,
+): string | null => {
+  if (
+    image &&
+    typeof image === "string" &&
+    image.trim() &&
+    image.trim() !== "null" &&
+    image.trim() !== "undefined"
+  ) {
+    return image.trim();
   }
 
-  const seed = (email ?? name ?? "user").trim().toLowerCase();
-  return `https://avatar.vercel.sh/${encodeURIComponent(seed)}?size=128`;
+  return null;
 };

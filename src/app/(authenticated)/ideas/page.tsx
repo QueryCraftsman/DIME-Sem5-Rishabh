@@ -99,6 +99,7 @@ export default function MyIdeasPage() {
             placeholder="Search ideas by title, keyword, or industry..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            suppressHydrationWarning
             className="w-full h-9 pl-9 pr-4 rounded-lg bg-canvas-bg border border-border-default text-xs text-text-strong focus:outline-none focus:border-primary"
           />
         </div>
@@ -116,6 +117,7 @@ export default function MyIdeasPage() {
                 key={f.id}
                 type="button"
                 onClick={() => setStatusFilter(f.id)}
+                suppressHydrationWarning
                 className={`px-3 py-1 text-xs font-semibold rounded-md transition-colors ${
                   statusFilter === f.id
                     ? "bg-surface-white text-primary shadow-sm"
@@ -132,6 +134,7 @@ export default function MyIdeasPage() {
             <button
               type="button"
               onClick={() => setViewMode("grid")}
+              suppressHydrationWarning
               className={`p-1.5 rounded-md transition-colors ${
                 viewMode === "grid"
                   ? "bg-surface-white text-text-strong shadow-sm"
@@ -144,6 +147,7 @@ export default function MyIdeasPage() {
             <button
               type="button"
               onClick={() => setViewMode("table")}
+              suppressHydrationWarning
               className={`p-1.5 rounded-md transition-colors ${
                 viewMode === "table"
                   ? "bg-surface-white text-text-strong shadow-sm"

@@ -91,8 +91,8 @@ export default function SettingsPage() {
     }, 4000);
   };
 
-  const email = profileEmail || session?.user?.email || "vivekchaurasiya943@gmail.com";
-  const resolvedDisplayName = displayName || session?.user?.name || "Vivek Chaurasiya";
+  const email = profileEmail || session?.user?.email || "";
+  const resolvedDisplayName = displayName || session?.user?.name || "User";
   const avatarUrl = getUserAvatarUrl(
     profileImage || session?.user?.image,
     email,
@@ -328,7 +328,7 @@ export default function SettingsPage() {
             {/* Avatar & Identity Box */}
             <div className="flex items-center gap-4 rounded-xl border border-border/70 bg-surface-secondary/50 p-3.5">
               <Avatar className="h-14 w-14 rounded-full border border-border shadow-xs">
-                <AvatarImage src={avatarUrl} alt={resolvedDisplayName} />
+                <AvatarImage src={avatarUrl || undefined} alt={resolvedDisplayName} />
                 <AvatarFallback className="bg-primary/10 text-primary font-bold text-base">
                   {initials}
                 </AvatarFallback>

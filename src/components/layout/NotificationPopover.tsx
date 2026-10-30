@@ -259,6 +259,7 @@ export function NotificationPopover() {
         }}
         type="button"
         id="notification-bell-btn"
+        suppressHydrationWarning
         aria-label={`Notifications${unreadCount > 0 ? `, ${unreadCount} unread` : ""}`}
         aria-expanded={isOpen}
         aria-haspopup="dialog"
