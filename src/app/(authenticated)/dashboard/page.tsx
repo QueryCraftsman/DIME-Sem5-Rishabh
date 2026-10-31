@@ -11,6 +11,14 @@ import { RecentAnalysesTable } from "@/components/dashboard/RecentAnalysesTable"
 import { OpportunityDistribution, OpportunityMixItem } from "@/components/dashboard/OpportunityDistribution";
 import { MarketSignals, MarketSignalItem } from "@/components/dashboard/MarketSignals";
 import {
+  PortfolioValidationMatrix,
+  MatrixIdeaPoint,
+} from "@/components/dashboard/PortfolioValidationMatrix";
+import {
+  PortfolioValidationBenchmark,
+  BenchmarkIdeaItem,
+} from "@/components/dashboard/PortfolioValidationBenchmark";
+import {
   PortfolioMarketIntelligence,
   PortfolioIntelligenceData,
 } from "@/components/dashboard/PortfolioMarketIntelligence";
@@ -26,6 +34,8 @@ interface DashboardData {
   stats: KpiStats;
   opportunityMix: OpportunityMixItem[];
   marketSignals: MarketSignalItem[];
+  validationMatrix?: MatrixIdeaPoint[];
+  benchmarkData?: BenchmarkIdeaItem[];
   portfolioIntelligence: PortfolioIntelligenceData;
   researchSourcesHealth: ResearchSourceHealthItem[];
   pipelineHealth: PipelineHealthData;
@@ -150,17 +160,20 @@ export default function DashboardPage() {
         <KpiCards stats={data?.stats} isLoading={loading} />
       </section>
 
-      {/* 3. Core Intelligence Grid (Recent Analyses Table + Opportunity & Signals) */}
+      {/* 3. Core Intelligence Grid (Recent Analyses Table & Viability Matrix on Left, Opportunity & Signals on Right) */}
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start" aria-label="Core Analytics">
-        {/* Left Column (2/3 width): Recent Analyses Table */}
+        {/* Left Column (2/3 width): Table + 2D Viability Scatter Matrix + Pillar Benchmark */}
         <div className="lg:col-span-2 space-y-6">
           <RecentAnalysesTable />
+          <PortfolioValidationMatrix data={data?.validationMatrix} isLoading={loading} />
+          <PortfolioValidationBenchmark data={data?.benchmarkData} isLoading={loading} />
         </div>
 
         {/* Right Column (1/3 width): Opportunity Distribution & Market Signals */}
         <div className="space-y-6">
           <OpportunityDistribution mix={data?.opportunityMix} isLoading={loading} />
           <MarketSignals signals={data?.marketSignals} isLoading={loading} />
+          <RecentActivity activities={data?.recentActivity} isLoading={loading} />
         </div>
       </section>
 
@@ -175,15 +188,12 @@ export default function DashboardPage() {
         <PipelineHealth data={data?.pipelineHealth} isLoading={loading} />
       </section>
 
-      {/* 6. Portfolio Insight & Recent Activity */}
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch" aria-label="Activity & Insights">
-        <div className="lg:col-span-2">
+      {/* 6. Executive Intelligence Insight (Quick Insight placed at bottom of page) */}
+      {data?.quickInsight && (
+        <section aria-label="Executive Intelligence Insight">
           <ProTip insight={data?.quickInsight} isLoading={loading} />
-        </div>
-        <div className="lg:col-span-1">
-          <RecentActivity activities={data?.recentActivity} isLoading={loading} />
-        </div>
-      </section>
+        </section>
+      )}
     </div>
   );
 }

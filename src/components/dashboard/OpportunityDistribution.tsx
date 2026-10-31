@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Target, Sparkles, Compass, CheckCircle2, ChevronRight, HelpCircle } from "lucide-react";
-import Link from "next/link";
+import { Target, Sparkles, Compass } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface OpportunityMixItem {
@@ -30,7 +29,7 @@ interface TierTheme {
 const TIER_THEMES: Record<string, TierTheme> = {
   "Strong Validation": {
     name: "Strong Validation",
-    displayLabel: "Strong",
+    displayLabel: "Strong Validation",
     accent: "#10b981", // Luminous Emerald
     gradientClass: "from-emerald-400 via-teal-400 to-emerald-500",
     lightBg: "bg-emerald-50/70 dark:bg-emerald-950/20",
@@ -58,7 +57,7 @@ const TIER_THEMES: Record<string, TierTheme> = {
   },
   "Needs Further Validation": {
     name: "Needs Further Validation",
-    displayLabel: "Validation",
+    displayLabel: "Needs Validation",
     accent: "#38bdf8", // Luminous Sky Blue
     gradientClass: "from-sky-300 via-sky-400 to-blue-400",
     lightBg: "bg-sky-50/70 dark:bg-sky-950/20",
@@ -72,7 +71,7 @@ const TIER_THEMES: Record<string, TierTheme> = {
   },
   "Awaiting Analysis": {
     name: "Awaiting Analysis",
-    displayLabel: "Awaiting",
+    displayLabel: "Awaiting Run",
     accent: "#94a3b8", // Slate
     gradientClass: "from-slate-300 via-slate-400 to-slate-500 dark:from-slate-600 dark:to-slate-700",
     lightBg: "bg-slate-50/70 dark:bg-slate-900/40",
@@ -111,7 +110,7 @@ export function OpportunityDistribution({
           <div className="h-5 w-20 bg-slate-100 dark:bg-slate-800 rounded-full" />
         </div>
         <div className="h-5 w-full bg-slate-100 dark:bg-slate-800 rounded-full mb-6" />
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+        <div className="grid grid-cols-2 gap-2.5">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="h-20 bg-slate-100 dark:bg-slate-800 rounded-xl" />
           ))}
@@ -159,7 +158,7 @@ export function OpportunityDistribution({
         ) : (
           <>
             {/* Interactive Tooltip & Active Description */}
-            <div className="min-h-[26px] mb-2 flex items-center justify-between text-xs px-0.5">
+            <div className="min-h-[24px] mb-2.5 flex items-center justify-between text-xs px-0.5">
               {hoveredTier && activeHoveredTheme ? (
                 <div className="flex items-center gap-2 animate-in fade-in slide-in-from-top-1 duration-150 truncate">
                   <div
@@ -172,9 +171,6 @@ export function OpportunityDistribution({
                   <span className="font-medium text-slate-600 dark:text-slate-300">
                     {activeHoveredItem?.value} {activeHoveredItem?.value === 1 ? "idea" : "ideas"} ({activePercentage}%)
                   </span>
-                  <span className="text-slate-400 hidden xl:inline">
-                    — {activeHoveredTheme.description}
-                  </span>
                 </div>
               ) : (
                 <span className="text-[11px] text-slate-400 font-normal">
@@ -184,7 +180,7 @@ export function OpportunityDistribution({
             </div>
 
             {/* Interactive Progress Bar */}
-            <div className="relative flex h-5 w-full rounded-full p-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 shadow-[inset_0_1px_2px_rgba(0,0,0,0.06)] gap-1 mb-5">
+            <div className="relative flex h-5 w-full rounded-full p-0.5 bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 shadow-[inset_0_1px_2px_rgba(0,0,0,0.06)] gap-1 mb-4">
               {items.map((item) => {
                 const percentage = total > 0 ? (item.value / total) * 100 : 0;
                 if (percentage === 0) return null;
@@ -215,8 +211,8 @@ export function OpportunityDistribution({
               })}
             </div>
 
-            {/* Interactive Tier Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {/* 2x2 Interactive Tier Cards: Fits comfortably with ZERO truncation! */}
+            <div className="grid grid-cols-2 gap-2.5">
               {items.map((item) => {
                 const percentage = total > 0 ? Math.round((item.value / total) * 100) : 0;
                 const theme = getTheme(item.name);
@@ -229,17 +225,17 @@ export function OpportunityDistribution({
                     onMouseEnter={() => setHoveredTier(item.name)}
                     onMouseLeave={() => setHoveredTier(null)}
                     className={cn(
-                      "relative flex flex-col justify-between p-2.5 rounded-xl border transition-all duration-200 cursor-pointer select-none",
+                      "relative flex flex-col justify-between p-3 rounded-xl border transition-all duration-200 cursor-pointer select-none",
                       theme.lightBg,
                       theme.borderClass,
                       isHovered
-                        ? cn(theme.lightBgHover, theme.borderHoverClass, "scale-[1.02] shadow-sm -translate-y-0.5 z-10")
+                        ? cn(theme.lightBgHover, theme.borderHoverClass, "scale-[1.02] shadow-xs -translate-y-0.5 z-10")
                         : isOtherHovered
                         ? "opacity-45 grayscale-[20%]"
-                        : "hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-xs"
+                        : "hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-2xs"
                     )}
                   >
-                    {/* Top Row: Dot + Label */}
+                    {/* Top Row: Dot + Full Label (Never clipped!) */}
                     <div className="flex items-center gap-1.5 mb-2 min-w-0">
                       <div className="relative flex items-center justify-center w-2 h-2 shrink-0">
                         <div
@@ -253,7 +249,7 @@ export function OpportunityDistribution({
                           />
                         )}
                       </div>
-                      <span className="text-[11px] font-semibold text-slate-700 dark:text-slate-200 truncate">
+                      <span className="text-xs font-semibold text-slate-800 dark:text-slate-200 leading-tight">
                         {theme.displayLabel}
                       </span>
                     </div>

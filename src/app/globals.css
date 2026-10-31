@@ -694,3 +694,14 @@ nextjs-portal {
 }
 
 
+
+/* Hide scrollbar across all browsers while preserving scrollability */
+.scrollbar-none {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}

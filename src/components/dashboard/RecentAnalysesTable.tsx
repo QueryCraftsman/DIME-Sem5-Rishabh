@@ -11,9 +11,7 @@ import {
   CheckCircle2, 
   Clock, 
   AlertCircle,
-  ExternalLink,
   Sparkles,
-  Compass,
   ArrowRight
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -48,9 +46,9 @@ const timeAgo = (dateStr: string) => {
   const hour = 60 * minute;
   const day = 24 * hour;
   
-  if (diff < hour) return `${Math.max(1, Math.floor(diff / minute))} min ago`;
-  if (diff < day) return `${Math.max(1, Math.floor(diff / hour))} hours ago`;
-  return `${Math.max(1, Math.floor(diff / day))} days ago`;
+  if (diff < hour) return `${Math.max(1, Math.floor(diff / minute))}m ago`;
+  if (diff < day) return `${Math.max(1, Math.floor(diff / hour))}h ago`;
+  return `${Math.max(1, Math.floor(diff / day))}d ago`;
 };
 
 export function RecentAnalysesTable() {
@@ -128,13 +126,13 @@ export function RecentAnalysesTable() {
   };
 
   return (
-    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl flex flex-col shadow-sm overflow-hidden">
+    <div className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-2xl flex flex-col shadow-xs overflow-hidden">
       {/* Table Header with Filters & Search */}
-      <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-lg font-semibold text-dime-navy dark:text-white flex items-center gap-2">
+          <h2 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white flex items-center gap-2">
             <span>Recent Analyses</span>
-            <span className="text-xs font-normal text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
+            <span className="text-xs font-normal text-slate-500 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-full">
               {totalItems} ideas
             </span>
           </h2>
@@ -143,7 +141,7 @@ export function RecentAnalysesTable() {
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           {/* Search Box */}
           <div className="relative">
             <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -155,12 +153,12 @@ export function RecentAnalysesTable() {
                 setSearchQuery(e.target.value);
                 setPage(1);
               }}
-              className="pl-8 pr-3 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-dime-orange text-slate-900 dark:text-white w-full sm:w-44"
+              className="pl-8 pr-3 py-1.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-dime-orange text-slate-900 dark:text-white w-full sm:w-40"
             />
           </div>
 
           {/* Tab Filter Pills */}
-          <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg" role="tablist" aria-label="Analyses status filter">
+          <div className="flex bg-slate-100 dark:bg-slate-800/80 p-0.5 rounded-lg border border-slate-200/60 dark:border-slate-700/60" role="tablist" aria-label="Analyses status filter">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
@@ -169,10 +167,10 @@ export function RecentAnalysesTable() {
                 aria-selected={activeTab === tab.id}
                 onClick={() => { setActiveTab(tab.id); setPage(1); }}
                 className={cn(
-                  "px-3 py-1 text-xs font-medium rounded-md transition-colors cursor-pointer",
+                  "px-2.5 py-1 text-xs font-medium rounded-md transition-colors cursor-pointer whitespace-nowrap",
                   activeTab === tab.id 
-                    ? "bg-white dark:bg-slate-700 text-dime-navy dark:text-white shadow-xs font-semibold" 
-                    : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300"
+                    ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-2xs font-semibold" 
+                    : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
                 )}
               >
                 {tab.label}
@@ -183,13 +181,13 @@ export function RecentAnalysesTable() {
       </div>
       
       {/* Table Body */}
-      <div className="flex-1 overflow-x-auto min-h-[300px] relative">
+      <div className="flex-1 overflow-x-auto min-h-[290px] relative scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {loading && data.length === 0 ? (
           <div className="absolute inset-0 flex items-center justify-center">
             <Loader2 className="w-6 h-6 text-dime-orange animate-spin" />
           </div>
         ) : data.length === 0 ? (
-          <div className="py-16 flex flex-col items-center justify-center text-slate-500">
+          <div className="py-14 flex flex-col items-center justify-center text-slate-500">
             <FileText className="w-10 h-10 mb-2 text-slate-300 dark:text-slate-600" />
             <p className="text-sm font-medium">No analyses match your filter</p>
             <p className="text-xs text-slate-400 mt-1">Try selecting another status tab or launch a new analysis.</p>
@@ -198,16 +196,16 @@ export function RecentAnalysesTable() {
           <table className="w-full text-left border-collapse text-xs">
             <thead className="bg-slate-50/80 dark:bg-slate-800/50">
               <tr>
-                <th className="px-5 py-3 font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">Idea</th>
-                <th className="px-4 py-3 font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">Status</th>
-                <th className="px-4 py-3 font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">Novelty</th>
-                <th className="px-4 py-3 font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">Market</th>
-                <th className="px-4 py-3 font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">Competition</th>
-                <th className="px-4 py-3 font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">Feasibility</th>
-                <th className="px-5 py-3 font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-slate-800 text-right">Updated</th>
+                <th className="pl-4 pr-2 py-2.5 font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 text-[10px]">Idea</th>
+                <th className="px-2 py-2.5 font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 text-[10px]">Status</th>
+                <th className="px-2 py-2.5 font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 text-[10px]">Novelty</th>
+                <th className="px-2 py-2.5 font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 text-[10px]">Market</th>
+                <th className="px-2 py-2.5 font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 text-[10px]">Competition</th>
+                <th className="px-2 py-2.5 font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 text-[10px]">Feasibility</th>
+                <th className="pl-2 pr-4 py-2.5 font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 text-right text-[10px]">Updated</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
+            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60">
               {data.map((row) => {
                 const isCompleted = row.status === "Completed";
                 const isInProgress = row.status === "In Progress";
@@ -218,133 +216,133 @@ export function RecentAnalysesTable() {
                   <tr 
                     key={row.id} 
                     onClick={() => handleRowClick(row)}
-                    className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors group cursor-pointer"
+                    className="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition-colors group cursor-pointer"
                   >
                     {/* Idea Title */}
-                    <td className="px-5 py-4 max-w-[220px]">
-                      <div className="font-medium text-dime-navy dark:text-white group-hover:text-dime-orange transition-colors truncate text-sm">
+                    <td className="pl-4 pr-2 py-2.5 max-w-[160px] sm:max-w-[190px]">
+                      <div className="font-semibold text-slate-900 dark:text-white group-hover:text-dime-orange transition-colors truncate text-xs">
                         {row.title}
                       </div>
-                      <div className="text-[11px] text-slate-400 truncate mt-0.5">
+                      <div className="text-[10px] text-slate-400 truncate mt-0.5">
                         {row.industry}
                       </div>
                     </td>
 
                     {/* Status Badge */}
-                    <td className="px-4 py-4 whitespace-nowrap">
+                    <td className="px-2 py-2.5 whitespace-nowrap">
                       {isCompleted ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/40">
-                          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/40">
+                          <CheckCircle2 className="w-2.5 h-2.5 text-emerald-600" />
                           <span>Validated</span>
                         </span>
                       ) : isInProgress ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800/40 animate-pulse">
-                          <Loader2 className="w-3 h-3 text-blue-600 animate-spin" />
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200/60 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800/40 animate-pulse">
+                          <Loader2 className="w-2.5 h-2.5 text-blue-600 animate-spin" />
                           <span>Analyzing</span>
                         </span>
                       ) : isFailed ? (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800/40">
-                          <AlertCircle className="w-3 h-3 text-rose-600" />
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200/60 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800/40">
+                          <AlertCircle className="w-2.5 h-2.5 text-rose-600" />
                           <span>Failed</span>
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
-                          <Clock className="w-3 h-3 text-slate-400" />
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200/60 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
+                          <Clock className="w-2.5 h-2.5 text-slate-400" />
                           <span>Draft</span>
                         </span>
                       )}
                     </td>
 
                     {/* Novelty Score */}
-                    <td className="px-4 py-4 whitespace-nowrap">
+                    <td className="px-2 py-2.5 whitespace-nowrap">
                       {isCompleted && row.scores.novelty !== null ? (
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1">
                           <span className={cn(
                             "w-1.5 h-1.5 rounded-full shrink-0",
                             row.novelty === "High" ? "bg-emerald-500" : row.novelty === "Medium" ? "bg-amber-500" : "bg-slate-400"
                           )} />
-                          <span className="font-semibold text-slate-900 dark:text-white">
+                          <span className="font-semibold text-slate-900 dark:text-white text-xs">
                             {row.scores.novelty}%
                           </span>
-                          <span className="text-[10px] text-slate-400">
+                          <span className="text-[9px] text-slate-400">
                             {row.novelty}
                           </span>
                         </div>
                       ) : isInProgress ? (
-                        <span className="text-slate-400 italic text-[11px]">Evaluating...</span>
+                        <span className="text-slate-400 italic text-[10px]">Scanning...</span>
                       ) : (
-                        <span className="text-slate-400 text-[11px]">Not analyzed</span>
+                        <span className="text-slate-400 text-[10px]">—</span>
                       )}
                     </td>
 
                     {/* Market Pain / Demand */}
-                    <td className="px-4 py-4 whitespace-nowrap">
+                    <td className="px-2 py-2.5 whitespace-nowrap">
                       {isCompleted && row.scores.market !== null ? (
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1">
                           <span className={cn(
                             "w-1.5 h-1.5 rounded-full shrink-0",
                             row.market === "High" ? "bg-emerald-500" : row.market === "Medium" ? "bg-amber-500" : "bg-slate-400"
                           )} />
-                          <span className="font-semibold text-slate-900 dark:text-white">
+                          <span className="font-semibold text-slate-900 dark:text-white text-xs">
                             {row.scores.market}/100
                           </span>
-                          <span className="text-[10px] text-slate-400">
+                          <span className="text-[9px] text-slate-400">
                             {row.market}
                           </span>
                         </div>
                       ) : isInProgress ? (
-                        <span className="text-slate-400 italic text-[11px]">Scanning...</span>
+                        <span className="text-slate-400 italic text-[10px]">Scanning...</span>
                       ) : (
-                        <span className="text-slate-400 text-[11px]">Not analyzed</span>
+                        <span className="text-slate-400 text-[10px]">—</span>
                       )}
                     </td>
 
                     {/* Competition / Saturation */}
-                    <td className="px-4 py-4 whitespace-nowrap">
+                    <td className="px-2 py-2.5 whitespace-nowrap">
                       {isCompleted && row.scores.competition !== null ? (
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1" title={`${row.scores.competition}% saturation`}>
                           <span className={cn(
                             "w-1.5 h-1.5 rounded-full shrink-0",
                             row.competition === "Low" ? "bg-emerald-500" : row.competition === "Medium" ? "bg-amber-500" : "bg-rose-500"
                           )} />
-                          <span className="font-semibold text-slate-900 dark:text-white">
+                          <span className="font-semibold text-slate-900 dark:text-white text-xs">
                             {row.scores.competition}%
                           </span>
-                          <span className="text-[10px] text-slate-400">
-                            {row.competition === "Low" ? "Low Saturation" : row.competition === "Medium" ? "Moderate" : "Crowded"}
+                          <span className="text-[9px] text-slate-400">
+                            {row.competition === "Low" ? "Moat" : row.competition === "Medium" ? "Mod." : "High"}
                           </span>
                         </div>
                       ) : isInProgress ? (
-                        <span className="text-slate-400 italic text-[11px]">Mapping...</span>
+                        <span className="text-slate-400 italic text-[10px]">Mapping...</span>
                       ) : (
-                        <span className="text-slate-400 text-[11px]">Not analyzed</span>
+                        <span className="text-slate-400 text-[10px]">—</span>
                       )}
                     </td>
 
                     {/* Feasibility */}
-                    <td className="px-4 py-4 whitespace-nowrap">
+                    <td className="px-2 py-2.5 whitespace-nowrap">
                       {isCompleted && row.scores.feasibility !== null ? (
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1" title={`${row.scores.feasibility}/100 feasibility`}>
                           <span className={cn(
                             "w-1.5 h-1.5 rounded-full shrink-0",
                             row.feasibility === "High" ? "bg-emerald-500" : row.feasibility === "Medium" ? "bg-amber-500" : "bg-rose-500"
                           )} />
-                          <span className="font-semibold text-slate-900 dark:text-white">
+                          <span className="font-semibold text-slate-900 dark:text-white text-xs">
                             {row.scores.feasibility}/100
                           </span>
-                          <span className="text-[10px] text-slate-400">
-                            {row.feasibility === "High" ? "Proven" : row.feasibility === "Medium" ? "Moderate" : "R&D"}
+                          <span className="text-[9px] text-slate-400">
+                            {row.feasibility === "High" ? "Proven" : row.feasibility === "Medium" ? "Mod." : "R&D"}
                           </span>
                         </div>
                       ) : isInProgress ? (
-                        <span className="text-slate-400 italic text-[11px]">Analyzing...</span>
+                        <span className="text-slate-400 italic text-[10px]">Analyzing...</span>
                       ) : (
-                        <span className="text-slate-400 text-[11px]">Not analyzed</span>
+                        <span className="text-slate-400 text-[10px]">—</span>
                       )}
                     </td>
 
                     {/* Updated Timestamp */}
-                    <td className="px-5 py-4 text-right whitespace-nowrap text-slate-500 dark:text-slate-400">
+                    <td className="pl-2 pr-4 py-2.5 text-right whitespace-nowrap text-slate-400 text-[10px]">
                       {timeAgo(row.updatedAt)}
                     </td>
                   </tr>
@@ -356,28 +354,30 @@ export function RecentAnalysesTable() {
       </div>
 
       {/* Pagination Footer */}
-      <div className="p-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between bg-slate-50/60 dark:bg-slate-900/50">
+      <div className="p-3 sm:p-3.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between bg-slate-50/60 dark:bg-slate-900/50">
         <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
           Showing Page {page} of {totalPages} ({totalItems} total ideas)
         </span>
-        <div className="flex gap-2">
-          <button 
-            type="button"
-            aria-label="Previous page"
+
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
-            onClick={() => setPage(p => Math.max(1, p - 1))}
-            className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            className="p-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+            title="Previous page"
+            aria-label="Previous page"
           >
-            <ChevronLeft className="w-4 h-4" />
+            <ChevronLeft className="w-3.5 h-3.5 text-slate-600 dark:text-slate-300" />
           </button>
-          <button 
-            type="button"
+          
+          <button
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+            className="p-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+            title="Next page"
             aria-label="Next page"
-            disabled={page === totalPages || totalPages === 0}
-            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-            className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-white dark:hover:bg-slate-800 transition-colors cursor-pointer"
           >
-            <ChevronRight className="w-4 h-4" />
+            <ChevronRight className="w-3.5 h-3.5 text-slate-600 dark:text-slate-300" />
           </button>
         </div>
       </div>
