@@ -79,7 +79,7 @@ export function IdeaContextualMarket({ ideaId, analysisId }: IdeaContextualMarke
     data.painPoints[selectedPainPointIndex] || data.painPoints[0];
 
   return (
-    <div className="space-y-8 pt-2 pb-16">
+    <div className="space-y-6 pt-2 pb-16">
       {/* 1. Summary Grid */}
       <MarketSummaryGrid summary={data.summary} />
 

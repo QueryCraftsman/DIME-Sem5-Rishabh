@@ -95,7 +95,7 @@ function MarketAnalysisContent() {
     data.painPoints[selectedPainPointIndex] || data.painPoints[0];
 
   return (
-    <div className="p-8 max-w-[1600px] w-full">
+    <div className="p-8 max-w-[1600px] w-full space-y-6">
       {/* 1. BREADCRUMB & PAGE HEADER */}
       <MarketHeader
         idea={data.idea}
@@ -107,7 +107,7 @@ function MarketAnalysisContent() {
       {/* 2. ANALYSIS NAVIGATION TABS */}
       <AnalysisTabs tabs={data.tabs} ideaId={data.idea.id} />
 
-      {/* 3. TOP SUMMARY ROW: 4 KEY METRIC CARDS */}
+      {/* 3. TOP SUMMARY ROW: 4 KEY DEMAND & EVIDENCE METRIC CARDS */}
       <MarketSummaryGrid summary={data.summary} />
 
       {/* 4. MAIN LAYOUT GRID (65% Left Column, 35% Right Column) */}

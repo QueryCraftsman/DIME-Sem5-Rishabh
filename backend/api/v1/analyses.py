@@ -22,6 +22,7 @@ from backend.models.scoring import AnalysisScore
 from backend.models.evidence import Evidence, Finding
 from backend.models.analysis import AgentActivity, SourceIngestion
 from backend.services.overview_intelligence_service import OverviewIntelligenceService
+from backend.services.market_intelligence_service import MarketIntelligenceService
 from sqlalchemy import select
 
 # This will be replaced with real NextAuth validation later.
@@ -313,6 +314,43 @@ async def get_analysis_report(
         "strategic_gaps": overview_data["strategic_gaps"],
         "mvp_focus": overview_data["mvp_focus"],
     }
+
+
+@router.get("/{analysis_id}/market-intelligence")
+async def get_analysis_market_intelligence(
+    analysis_id: str,
+    db: AsyncSession = Depends(get_db)
+) -> dict[str, Any]:
+    """Get the dynamic, evidence-backed market intelligence package for an analysis."""
+    analysis = await _resolve_analysis(db, analysis_id)
+    if not analysis:
+        raise HTTPException(status_code=404, detail="Analysis not found")
+
+    resolved_id = analysis.id
+    result = await db.execute(
+        select(AnalysisScore).where(AnalysisScore.analysis_id == resolved_id)
+    )
+    scores = result.scalars().all()
+
+    finding_result = await db.execute(
+        select(Finding).where(Finding.analysis_id == resolved_id)
+    )
+    findings = finding_result.scalars().all()
+
+    evidence_result = await db.execute(
+        select(Evidence).where(Evidence.analysis_id == resolved_id)
+    )
+    evidence_list = evidence_result.scalars().all()
+
+    market_data = await MarketIntelligenceService.get_or_synthesize_market_intelligence(
+        analysis=analysis,
+        db_scores=scores,
+        findings=findings,
+        evidence_list=evidence_list,
+        db=db,
+    )
+
+    return market_data
 
 
 @router.get("/{analysis_id}/evidence")

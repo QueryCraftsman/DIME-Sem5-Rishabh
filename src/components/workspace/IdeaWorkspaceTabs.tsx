@@ -84,56 +84,56 @@ export function IdeaWorkspaceTabs({
       id: "market",
       label: "Market",
       icon: <TrendingUp className="w-3.5 h-3.5 shrink-0" />,
-      badge: (
-        <span className="px-1.5 py-0.5 rounded text-[10px] sm:text-[11px] font-medium leading-none bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 shrink-0">
-          <span className="hidden sm:inline">{badges.marketSources ?? 27} sources</span>
-          <span className="inline sm:hidden">{badges.marketSources ?? 27}</span>
+      badge: badges.marketSources !== undefined ? (
+        <span className="px-1.5 py-0.5 rounded text-[10px] sm:text-[11px] font-medium leading-none bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 shrink-0 whitespace-nowrap">
+          <span className="hidden sm:inline">{badges.marketSources} sources</span>
+          <span className="inline sm:hidden">{badges.marketSources}</span>
         </span>
-      ),
+      ) : undefined,
     },
     {
       id: "competition",
       label: "Competition",
       icon: <BarChart3 className="w-3.5 h-3.5 shrink-0" />,
-      badge: (
-        <span className="px-1.5 py-0.5 rounded text-[10px] sm:text-[11px] font-medium leading-none bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 shrink-0">
-          <span className="hidden sm:inline">{badges.competitionDirect ?? 8} direct</span>
-          <span className="inline sm:hidden">{badges.competitionDirect ?? 8}</span>
+      badge: badges.competitionDirect !== undefined ? (
+        <span className="px-1.5 py-0.5 rounded text-[10px] sm:text-[11px] font-medium leading-none bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 shrink-0 whitespace-nowrap">
+          <span className="hidden sm:inline">{badges.competitionDirect} direct</span>
+          <span className="inline sm:hidden">{badges.competitionDirect}</span>
         </span>
-      ),
+      ) : undefined,
     },
     {
       id: "technical",
       label: "Technical",
       icon: <Cpu className="w-3.5 h-3.5 shrink-0" />,
-      badge: (
-        <span className="text-[10px] sm:text-xs text-emerald-600 dark:text-emerald-400 font-semibold shrink-0">
-          {badges.technicalLabel || "Feasible"}
+      badge: badges.technicalLabel ? (
+        <span className="text-[10px] sm:text-xs text-emerald-600 dark:text-emerald-400 font-semibold shrink-0 whitespace-nowrap">
+          {badges.technicalLabel}
         </span>
-      ),
+      ) : undefined,
     },
     {
       id: "research",
       label: "Research",
       icon: <BookOpen className="w-3.5 h-3.5 shrink-0" />,
-      badge: (
-        <span className="px-1.5 py-0.5 rounded text-[10px] sm:text-[11px] font-medium leading-none bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 shrink-0">
-          <span className="hidden sm:inline">{badges.researchPapers ?? 18} papers</span>
-          <span className="inline sm:hidden">{badges.researchPapers ?? 18}</span>
+      badge: badges.researchPapers !== undefined ? (
+        <span className="px-1.5 py-0.5 rounded text-[10px] sm:text-[11px] font-medium leading-none bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 shrink-0 whitespace-nowrap">
+          <span className="hidden sm:inline">{badges.researchPapers} papers</span>
+          <span className="inline sm:hidden">{badges.researchPapers}</span>
         </span>
-      ),
+      ) : undefined,
     },
     {
       id: "risks",
       label: "Risks & Recommendations",
       shortLabel: "Risks & Recs",
       icon: <AlertTriangle className="w-3.5 h-3.5 shrink-0" />,
-      badge: (
-        <span className="px-1.5 py-0.5 rounded text-[10px] sm:text-[11px] font-medium leading-none bg-amber-50 border border-amber-200 text-amber-700 dark:bg-amber-950/40 dark:border-amber-800/40 dark:text-amber-400 shrink-0">
-          <span className="hidden sm:inline">{badges.risksCount ?? 4} risks</span>
-          <span className="inline sm:hidden">{badges.risksCount ?? 4}</span>
+      badge: badges.risksCount !== undefined ? (
+        <span className="px-1.5 py-0.5 rounded text-[10px] sm:text-[11px] font-medium leading-none bg-amber-50 border border-amber-200 text-amber-700 dark:bg-amber-950/40 dark:border-amber-800/40 dark:text-amber-400 shrink-0 whitespace-nowrap">
+          <span className="hidden sm:inline">{badges.risksCount} risks</span>
+          <span className="inline sm:hidden">{badges.risksCount}</span>
         </span>
-      ),
+      ) : undefined,
     },
     {
       id: "opportunity",

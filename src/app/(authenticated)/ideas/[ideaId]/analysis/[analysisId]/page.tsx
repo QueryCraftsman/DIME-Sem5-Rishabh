@@ -365,13 +365,34 @@ export default function UnifiedIdeaWorkspacePage(_props: {
     );
   }
 
-  // Compute Badges for Tabs
+  // Compute Badges for Tabs dynamically with absolute authentic provenance
+  const directCompetitorCount = report?.competitors?.filter((c: any) => 
+    c.classification?.toLowerCase().includes("direct") || 
+    c.relationship?.toLowerCase().includes("direct")
+  ).length ?? report?.competitors?.length ?? 0;
+
+  const researchCount = evidence.filter((e) => 
+    e.evidence_type === "research" || 
+    e.source_url?.includes("semanticscholar") || 
+    e.source_url?.includes("arxiv") || 
+    e.source_url?.includes("doi.org") ||
+    e.source_url?.includes("pubmed") ||
+    e.source_url?.includes("sciencedirect")
+  ).length;
+
+  const risksCount = report?.findings?.filter((f) => f.category === "risk").length ?? 0;
+
+  const feasScore = report?.scores?.["Feasibility"]?.score;
+  const technicalLabel = feasScore != null 
+    ? (feasScore >= 70 ? "Feasible" : feasScore >= 45 ? "Moderate" : "Challenging")
+    : "Feasible";
+
   const badges: TabBadgeInfo = {
-    marketSources: evidence.length > 0 ? evidence.length : 27,
-    competitionDirect: 8,
-    technicalLabel: report?.scores?.["Feasibility"]?.score && report.scores["Feasibility"].score >= 70 ? "Feasible" : "Moderate",
-    researchPapers: evidence.filter((e) => e.evidence_type === "research").length || 18,
-    risksCount: report?.findings?.filter((f) => f.category === "risk").length || 4,
+    marketSources: evidence.length,
+    competitionDirect: directCompetitorCount,
+    technicalLabel: technicalLabel,
+    researchPapers: researchCount,
+    risksCount: risksCount,
     evidenceCount: evidence.length,
     historyCount: historyCount,
   };
