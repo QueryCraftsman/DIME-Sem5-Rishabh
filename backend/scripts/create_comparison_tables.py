@@ -1,6 +1,7 @@
 import asyncio
 from backend.core.database import async_session_factory
 from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
 
 STATEMENTS = [
     """CREATE TABLE IF NOT EXISTS "ComparisonReport" (
@@ -47,8 +48,15 @@ STATEMENTS = [
     """CREATE INDEX IF NOT EXISTS "ComparisonReport_status_idx" ON "ComparisonReport"("status");""",
     """DO $$
     BEGIN
+        -- A Prisma @@unique migration creates a bare UNIQUE INDEX, which has
+        -- no pg_constraint row, so the index catalog must be checked too or
+        -- this block fails with 'relation already exists' on migrated DBs.
         IF NOT EXISTS (
             SELECT 1 FROM pg_constraint WHERE conname = 'ComparisonCandidate_comparisonId_ideaId_key'
+        ) AND NOT EXISTS (
+            SELECT 1 FROM pg_class
+            WHERE relkind = 'i'
+            AND relname = 'ComparisonCandidate_comparisonId_ideaId_key'
         ) THEN
             ALTER TABLE "ComparisonCandidate" ADD CONSTRAINT "ComparisonCandidate_comparisonId_ideaId_key" UNIQUE ("comparisonId", "ideaId");
         END IF;
@@ -80,12 +88,22 @@ STATEMENTS = [
     END $$;"""
 ]
 
+async def ensure_comparison_tables(session: AsyncSession) -> None:
+    """Create ComparisonReport/ComparisonCandidate tables if missing.
+
+    Every statement is idempotent (IF NOT EXISTS / constraint guards), so
+    this is safe to run on every backend startup as a self-heal for
+    databases where the Prisma migration was never applied.
+    """
+    for stmt in STATEMENTS:
+        await session.execute(text(stmt))
+    await session.commit()
+
+
 async def main():
     async with async_session_factory() as session:
         print("Running DDL for ComparisonReport and ComparisonCandidate...")
-        for stmt in STATEMENTS:
-            await session.execute(text(stmt))
-        await session.commit()
+        await ensure_comparison_tables(session)
         print("ComparisonReport and ComparisonCandidate tables verified/created successfully!")
 
 

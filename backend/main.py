@@ -24,10 +24,26 @@ from fastapi.responses import JSONResponse
 
 from backend.api.v1.router import api_v1_router
 from backend.core.config import get_settings
+from backend.core.database import async_session_factory
 from backend.core.exceptions import DimeError
 from backend.core.logging import get_logger, setup_logging
 
 logger = get_logger(__name__)
+
+
+async def _ensure_comparison_tables() -> None:
+    """Self-heal: create comparison tables when the migration was never applied.
+
+    Best-effort only - a failure here must never prevent backend startup.
+    """
+    try:
+        from backend.scripts.create_comparison_tables import ensure_comparison_tables
+
+        async with async_session_factory() as session:
+            await ensure_comparison_tables(session)
+        logger.info("comparison_tables_verified")
+    except Exception as exc:
+        logger.warning("comparison_tables_ensure_skipped", error=str(exc))
 
 
 @asynccontextmanager
@@ -40,6 +56,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         environment=settings.environment,
         cors_origins=settings.cors_origins,
     )
+    await _ensure_comparison_tables()
     yield
     logger.info("dime_backend_shutting_down")
 
