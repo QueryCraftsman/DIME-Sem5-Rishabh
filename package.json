@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev --webpack -p 3000",
     "build": "next build --webpack",
+    "vercel-build": "prisma generate --schema ./prisma/schema.prisma && next build --webpack",
     "postinstall": "prisma generate --schema ./prisma/schema.prisma",
     "start": "next start",
     "lint": "eslint",
@@ -51,5 +52,8 @@
     "eslint-config-next": "16.1.6",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "engines": {
+    "node": ">=20.9.0"
   }
 }
