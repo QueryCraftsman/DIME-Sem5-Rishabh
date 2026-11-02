@@ -25,7 +25,8 @@ node_modules/
 *serviceAccount*.json
 /backend/.env
 /backend/.env.*
-
+/datasets/
+datasets/
 
 # ── Next.js & Build Outputs ────────────────────────────────
 .next/

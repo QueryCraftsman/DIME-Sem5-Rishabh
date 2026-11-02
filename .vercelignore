@@ -1,0 +1,8 @@
+# Ignore Python backend and local data when deploying Next.js frontend to Vercel
+backend/
+datasets/
+scratch/
+docker-compose.yml
+render.yaml
+*.csv
+
