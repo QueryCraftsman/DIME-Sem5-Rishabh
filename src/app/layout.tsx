@@ -41,8 +41,7 @@ export default function RootLayout({
               (function() {
                 try {
                   var stored = localStorage.getItem('dime-theme');
-                  var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                  var theme = stored === 'dark' || (!stored && prefersDark) || (stored === 'system' && prefersDark) ? 'dark' : (stored === 'light' ? 'light' : (prefersDark ? 'dark' : 'light'));
+                  var theme = stored === 'dark' ? 'dark' : 'light';
                   var root = document.documentElement;
                   if (theme === 'dark') {
                     root.classList.add('dark');

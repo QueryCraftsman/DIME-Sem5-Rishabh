@@ -31,28 +31,23 @@ function applyThemeToDOM(resolved: ResolvedTheme) {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>("system");
+  const [theme, setThemeState] = useState<Theme>("light");
   const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>("light");
   const [mounted, setMounted] = useState(false);
 
-  // Initialize theme from localStorage or system
+  // Initialize theme from localStorage, default to light
   useEffect(() => {
     try {
       const stored = localStorage.getItem(THEME_STORAGE_KEY) as Theme | null;
       const initialTheme: Theme =
-        stored === "light" || stored === "dark" || stored === "system"
+        stored === "dark" || stored === "light"
           ? stored
-          : "system";
-      setThemeState(initialTheme);
-
-      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-      const getSystemTheme = (): ResolvedTheme =>
-        mediaQuery.matches ? "dark" : "light";
-      const resolved: ResolvedTheme =
-        initialTheme === "system" ? getSystemTheme() : initialTheme;
-
-      setResolvedTheme(resolved);
-      applyThemeToDOM(resolved);
+          : stored === "system"
+            ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+            : "light";
+      setThemeState(stored || "light");
+      setResolvedTheme(initialTheme);
+      applyThemeToDOM(initialTheme);
     } catch {
       setResolvedTheme("light");
       applyThemeToDOM("light");
