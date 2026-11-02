@@ -6,6 +6,7 @@ Tests for OverviewIntelligenceService:
 - Idea and analysis-run isolation
 """
 
+import uuid
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 from backend.models.analysis import Analysis, AnalysisStatus
@@ -16,9 +17,10 @@ from backend.services.overview_intelligence_service import OverviewIntelligenceS
 
 @pytest.mark.asyncio
 async def test_foodloop_overview_contextual_intelligence(db_session: AsyncSession):
+    uid = uuid.uuid4().hex[:8]
     analysis = Analysis(
-        id="test-foodloop-001",
-        idea_id="idea-foodloop-001",
+        id=f"test-foodloop-{uid}",
+        idea_id=f"idea-foodloop-{uid}",
         user_id="user-1",
         title="FoodLoop: Smart Surplus Food Redistribution",
         description="A B2B platform connecting corporate cafeterias and grocery stores with local food rescue charities.",
@@ -31,7 +33,7 @@ async def test_foodloop_overview_contextual_intelligence(db_session: AsyncSessio
 
     evidence_list = [
         Evidence(
-            id=f"ev-food-{i}",
+            id=f"ev-food-{uid}-{i}",
             analysis_id=analysis.id,
             evidence_type="web",
             claim="Commercial food rescue platforms reduce cafeteria waste.",
@@ -74,9 +76,10 @@ async def test_foodloop_overview_contextual_intelligence(db_session: AsyncSessio
 
 @pytest.mark.asyncio
 async def test_campusos_overview_contextual_intelligence(db_session: AsyncSession):
+    uid = uuid.uuid4().hex[:8]
     analysis = Analysis(
-        id="test-campusos-002",
-        idea_id="idea-campusos-002",
+        id=f"test-campusos-{uid}",
+        idea_id=f"idea-campusos-{uid}",
         user_id="user-1",
         title="CampusOS: The Student Workflow Assistant",
         description="An AI-powered academic operating system that aggregates student syllabi, deadlines, and Canvas assignments into an adaptive study queue.",
@@ -108,9 +111,10 @@ async def test_campusos_overview_contextual_intelligence(db_session: AsyncSessio
 
 @pytest.mark.asyncio
 async def test_physics_lab_overview_contextual_intelligence(db_session: AsyncSession):
+    uid = uuid.uuid4().hex[:8]
     analysis = Analysis(
-        id="test-physics-003",
-        idea_id="idea-physics-003",
+        id=f"test-physics-{uid}",
+        idea_id=f"idea-physics-{uid}",
         user_id="user-1",
         title="Gamified Virtual Physics Lab with AI Guidance",
         description="An interactive simulation playground where students solve experimental mechanics challenges with real-time conversational AI guidance.",
@@ -142,10 +146,10 @@ async def test_physics_lab_overview_contextual_intelligence(db_session: AsyncSes
 
 @pytest.mark.asyncio
 async def test_confidence_and_isolation_across_runs(db_session: AsyncSession):
-    # Analysis with zero evidence
+    uid = uuid.uuid4().hex[:8]
     analysis_low = Analysis(
-        id="test-empty-004",
-        idea_id="idea-empty-004",
+        id=f"test-empty-{uid}",
+        idea_id=f"idea-empty-{uid}",
         user_id="user-1",
         title="Quantum Molecular Dynamics Solver",
         description="Novel quantum simulation engine.",

@@ -4,9 +4,15 @@ DIME Backend — Dense Retrieval.
 Performs vector searches against Qdrant using the configured EmbeddingProvider.
 """
 
-import logging
+from __future__ import annotations
 
-from qdrant_client.http import models
+import logging
+from typing import Any
+
+try:
+    from qdrant_client.http import models
+except ImportError:
+    models = None  # type: ignore
 
 from backend.core.config import get_settings
 from backend.core.embeddings import EmbeddingProvider
@@ -24,8 +30,11 @@ class DenseRetriever:
         self.embedding_provider = embedding_provider
         self.qdrant_store = qdrant_store
 
-    def _build_filter(self, query: RetrievalQuery) -> models.Filter | None:
+    def _build_filter(self, query: RetrievalQuery) -> Any:
         """Build Qdrant metadata filters."""
+        if models is None:
+            return None
+
         must_conditions = []
 
         if query.source:
@@ -34,9 +43,6 @@ class DenseRetriever:
                     key="source", match=models.MatchAny(any=query.source)
                 )
             )
-            
-        # Qdrant payloads from Phase 7 don't include entity_type (source_type), 
-        # so we will rely on Postgres hydration/filtering for missing constraints later.
 
         if not must_conditions:
             return None

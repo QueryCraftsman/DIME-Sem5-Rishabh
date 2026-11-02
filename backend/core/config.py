@@ -130,10 +130,28 @@ class Settings(BaseSettings):
     reranker_batch_size: int = 32
     reranker_device: str = "cpu"
 
-    # ── AI Agents (Phase 10) ──────────────────────────────────
-    llm_provider_name: str = "openai"
-    llm_model_name: str = "gpt-4o-mini"
+    # ── AI Agents & Centralized Multi-Provider LLM Failover ───
+    llm_provider_name: str = "groq"
+    llm_model_name: str = "qwen/qwen3.8-27b"
     llm_temperature: float = 0.0
+
+    # Multi-provider routing & automatic failover
+    llm_primary_provider: str = "groq"
+    llm_fallback_providers: str = "gemini,nvidia"
+    llm_fallback_enabled: bool = True
+    llm_max_retries_per_provider: int = 2
+    llm_default_timeout_seconds: float = 60.0
+    llm_provider_cooldown_seconds: int = 60
+    llm_circuit_breaker_enabled: bool = True
+    llm_circuit_breaker_threshold: int = 3
+    llm_circuit_breaker_recovery_seconds: int = 60
+    llm_provider_concurrency_limit: int = 5
+
+    # Provider-specific model defaults
+    groq_model_name: str = "qwen/qwen3.8-27b"
+    gemini_model_name: str = "gemini-3.5-flash"
+    nvidia_model_name: str = "nvidia/nemotron-3.5-lightning:free"
+    openai_model_name: str = "gpt-4o-mini"
     
     agent_max_research_questions: int = 3
     agent_max_competitor_questions: int = 2
@@ -146,8 +164,6 @@ class Settings(BaseSettings):
     github_max_candidate_pool: int = 150
     paper_max_candidate_pool: int = 80
     web_max_candidate_pool: int = 30
-
-
 
     # ── Computed ──────────────────────────────────────────────
     @computed_field  # type: ignore[prop-decorator]

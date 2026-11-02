@@ -8,8 +8,12 @@ bounded upserts, and deletion of vectors based on PostgreSQL expiration.
 import logging
 from typing import Any
 
-from qdrant_client import AsyncQdrantClient
-from qdrant_client.http import models
+try:
+    from qdrant_client import AsyncQdrantClient
+    from qdrant_client.http import models
+except ImportError:
+    AsyncQdrantClient = None  # type: ignore
+    models = None  # type: ignore
 
 from backend.core.config import get_settings
 

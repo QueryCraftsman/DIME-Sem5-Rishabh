@@ -23,7 +23,13 @@ export async function GET(req: Request) {
       idea_title: string;
       raw_idea_status: string;
       industry: string | null;
+      idea_created_at: Date;
       idea_updated_at: Date;
+      idea_feasibility_score: number | null;
+      idea_market_demand: number | null;
+      idea_competition_level: number | null;
+      idea_novelty_score: number | null;
+      idea_opportunity_score: number | null;
       analysis_id: string | null;
       analysis_status: string | null;
       analysis_created_at: Date | null;
@@ -61,7 +67,13 @@ export async function GET(req: Request) {
         i.title as idea_title,
         i.status as raw_idea_status,
         i.industry,
+        i."createdAt" as idea_created_at,
         i."updatedAt" as idea_updated_at,
+        i."feasibilityScore" as idea_feasibility_score,
+        i."marketDemand" as idea_market_demand,
+        i."competitionLevel" as idea_competition_level,
+        i."noveltyScore" as idea_novelty_score,
+        i."opportunityScore" as idea_opportunity_score,
         la.analysis_id,
         la.analysis_status,
         la.analysis_created_at,
@@ -71,7 +83,7 @@ export async function GET(req: Request) {
       LEFT JOIN latest_analyses la ON la.idea_id = i.id
       LEFT JOIN aggregated_scores ascores ON ascores.analysis_id = la.analysis_id
       WHERE i."userId" = ${userId}
-      ORDER BY i."updatedAt" DESC
+      ORDER BY COALESCE(la.analysis_completed_at, la.analysis_created_at, i."createdAt") DESC
     `;
 
     // Process and normalize rows
@@ -92,11 +104,11 @@ export async function GET(req: Request) {
         resolvedStatus = "Draft";
       }
 
-      // 2. Score mapping
+      // 2. Score mapping with robust fallback to idea-level columns if analysis_scores is partial or case-variant
       const sm = row.score_map || {};
 
       // Novelty
-      const rawNovelty = sm["Novelty"]?.score;
+      const rawNovelty = sm["Novelty"]?.score ?? sm["novelty"]?.score ?? row.idea_novelty_score;
       let noveltyScore: number | null = null;
       let noveltyLabel = "N/A";
       if (rawNovelty !== undefined && rawNovelty !== null) {
@@ -106,7 +118,7 @@ export async function GET(req: Request) {
       }
 
       // Market Pain / Demand
-      const rawMarket = sm["Market Pain"]?.score;
+      const rawMarket = sm["Market Pain"]?.score ?? sm["Market Demand"]?.score ?? sm["market_demand"]?.score ?? row.idea_market_demand;
       let marketScore: number | null = null;
       let marketLabel = "N/A";
       if (rawMarket !== undefined && rawMarket !== null) {
@@ -115,7 +127,7 @@ export async function GET(req: Request) {
       }
 
       // Competition / Saturation
-      const rawSat = sm["Market Saturation"]?.score;
+      const rawSat = sm["Market Saturation"]?.score ?? sm["Competition"]?.score ?? sm["competition"]?.score ?? row.idea_competition_level;
       let competitionScore: number | null = null;
       let competitionLabel = "N/A";
       if (rawSat !== undefined && rawSat !== null) {
@@ -125,7 +137,7 @@ export async function GET(req: Request) {
       }
 
       // Feasibility
-      const rawFeas = sm["Feasibility"]?.score;
+      const rawFeas = sm["Feasibility"]?.score ?? sm["feasibility"]?.score ?? row.idea_feasibility_score;
       let feasibilityScore: number | null = null;
       let feasibilityLabel = "N/A";
       if (rawFeas !== undefined && rawFeas !== null) {
@@ -134,12 +146,14 @@ export async function GET(req: Request) {
       }
 
       // Opportunity
-      const rawOpp = sm["Opportunity"]?.score;
+      const rawOpp = sm["Opportunity"]?.score ?? sm["opportunity"]?.score ?? row.idea_opportunity_score;
       const opportunityScore = rawOpp !== undefined && rawOpp !== null ? Math.round(rawOpp) : null;
 
       // Risk
-      const rawRisk = sm["Risk Indicator"]?.score;
+      const rawRisk = sm["Risk Indicator"]?.score ?? sm["risk"]?.score;
       const riskScore = rawRisk !== undefined && rawRisk !== null ? Math.round(rawRisk) : null;
+
+      const effectiveDate = row.analysis_completed_at || row.analysis_created_at || row.idea_updated_at || row.idea_created_at;
 
       return {
         id: row.idea_id,
@@ -160,7 +174,7 @@ export async function GET(req: Request) {
           risk: riskScore,
         },
         hasScores: resolvedStatus === "Completed" && (noveltyScore !== null || feasibilityScore !== null),
-        updatedAt: row.idea_updated_at.toISOString(),
+        updatedAt: effectiveDate ? new Date(effectiveDate).toISOString() : new Date().toISOString(),
       };
     });
 

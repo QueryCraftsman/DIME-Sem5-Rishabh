@@ -53,6 +53,51 @@ export default function MyIdeasPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const renderStatusBadge = (status: string) => {
+    const s = (status || "").toUpperCase();
+    if (s === "VALIDATED" || s === "COMPLETED") {
+      return (
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800/40">
+          <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+          Completed
+        </span>
+      );
+    }
+    if (
+      [
+        "ANALYZING",
+        "RUNNING",
+        "PLANNING",
+        "RESEARCHING",
+        "COMPETING",
+        "RETRIEVING",
+        "SYNTHESIZING",
+        "SCORING",
+        "PENDING",
+      ].includes(s)
+    ) {
+      return (
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-800/40 animate-pulse">
+          <Clock className="w-3 h-3 text-blue-600" />
+          Analyzing
+        </span>
+      );
+    }
+    if (s === "FAILED") {
+      return (
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-400 dark:border-rose-800/40">
+          <AlertCircle className="w-3 h-3 text-rose-600" />
+          Failed
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-300">
+        Draft
+      </span>
+    );
+  };
+
   const filteredIdeas = ideas.filter((idea) => {
     const matchesSearch =
       idea.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -61,10 +106,23 @@ export default function MyIdeasPage() {
 
     if (!matchesSearch) return false;
 
+    const s = (idea.status || "").toUpperCase();
     if (statusFilter === "all") return true;
-    if (statusFilter === "completed") return idea.status.toUpperCase() === "VALIDATED" || idea.status.toUpperCase() === "COMPLETED";
-    if (statusFilter === "in_progress") return idea.status.toUpperCase() === "ANALYZING" || idea.status.toUpperCase() === "RUNNING";
-    if (statusFilter === "draft") return idea.status.toUpperCase() === "DRAFT";
+    if (statusFilter === "completed") return s === "VALIDATED" || s === "COMPLETED";
+    if (statusFilter === "in_progress") {
+      return [
+        "ANALYZING",
+        "RUNNING",
+        "PLANNING",
+        "RESEARCHING",
+        "COMPETING",
+        "RETRIEVING",
+        "SYNTHESIZING",
+        "SCORING",
+        "PENDING",
+      ].includes(s);
+    }
+    if (statusFilter === "draft") return s === "DRAFT";
     return true;
   });
 
@@ -99,40 +157,58 @@ export default function MyIdeasPage() {
             placeholder="Search ideas by title, keyword, or industry..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            suppressHydrationWarning
-            className="w-full h-9 pl-9 pr-4 rounded-lg bg-canvas-bg border border-border-default text-xs text-text-strong focus:outline-none focus:border-primary"
+            className="w-full pl-9 pr-4 py-2 rounded-xl bg-canvas-bg border border-border-default text-xs sm:text-sm text-text-strong placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-primary"
           />
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Status Filters */}
-          <div className="flex items-center bg-canvas-bg p-1 rounded-lg border border-border-default">
-            {[
-              { id: "all", label: "All" },
-              { id: "completed", label: "Completed" },
-              { id: "in_progress", label: "In Progress" },
-              { id: "draft", label: "Draft" },
-            ].map((f) => (
-              <button
-                key={f.id}
-                type="button"
-                onClick={() => setStatusFilter(f.id)}
-                suppressHydrationWarning
-                className={`px-3 py-1 text-xs font-semibold rounded-md transition-colors ${
-                  statusFilter === f.id
-                    ? "bg-surface-white text-primary shadow-sm"
-                    : "text-text-secondary hover:text-text-strong"
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
+        <div className="flex items-center justify-between sm:justify-end gap-3 flex-wrap">
+          {/* Status Tabs */}
+          <div className="flex items-center p-1 rounded-xl bg-canvas-bg border border-border-default text-xs font-semibold">
+            <button
+              onClick={() => setStatusFilter("all")}
+              className={`px-3 py-1.5 rounded-lg transition-colors ${
+                statusFilter === "all"
+                  ? "bg-surface-white text-text-strong shadow-sm"
+                  : "text-text-muted hover:text-text-strong"
+              }`}
+            >
+              All
+            </button>
+            <button
+              onClick={() => setStatusFilter("completed")}
+              className={`px-3 py-1.5 rounded-lg transition-colors ${
+                statusFilter === "completed"
+                  ? "bg-surface-white text-text-strong shadow-sm"
+                  : "text-text-muted hover:text-text-strong"
+              }`}
+            >
+              Completed
+            </button>
+            <button
+              onClick={() => setStatusFilter("in_progress")}
+              className={`px-3 py-1.5 rounded-lg transition-colors ${
+                statusFilter === "in_progress"
+                  ? "bg-surface-white text-text-strong shadow-sm"
+                  : "text-text-muted hover:text-text-strong"
+              }`}
+            >
+              In Progress
+            </button>
+            <button
+              onClick={() => setStatusFilter("draft")}
+              className={`px-3 py-1.5 rounded-lg transition-colors ${
+                statusFilter === "draft"
+                  ? "bg-surface-white text-text-strong shadow-sm"
+                  : "text-text-muted hover:text-text-strong"
+              }`}
+            >
+              Draft
+            </button>
           </div>
 
-          {/* View Toggle */}
-          <div className="hidden sm:flex items-center bg-canvas-bg p-1 rounded-lg border border-border-default">
+          {/* Grid vs Table View Mode */}
+          <div className="flex items-center p-1 rounded-xl bg-canvas-bg border border-border-default">
             <button
-              type="button"
               onClick={() => setViewMode("grid")}
               suppressHydrationWarning
               className={`p-1.5 rounded-md transition-colors ${
@@ -145,7 +221,6 @@ export default function MyIdeasPage() {
               <LayoutGrid className="w-4 h-4" />
             </button>
             <button
-              type="button"
               onClick={() => setViewMode("table")}
               suppressHydrationWarning
               className={`p-1.5 rounded-md transition-colors ${
@@ -187,9 +262,6 @@ export default function MyIdeasPage() {
       ) : viewMode === "grid" ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredIdeas.map((idea) => {
-            const isDone = idea.status.toUpperCase() === "VALIDATED" || idea.status.toUpperCase() === "COMPLETED";
-            const isAnalyzing = idea.status.toUpperCase() === "ANALYZING" || idea.status.toUpperCase() === "RUNNING";
-
             return (
               <div
                 key={idea.id}
@@ -201,21 +273,7 @@ export default function MyIdeasPage() {
                       {idea.industry || "General"}
                     </span>
 
-                    {isDone ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800/40">
-                        <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                        Completed
-                      </span>
-                    ) : isAnalyzing ? (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-800/40 animate-pulse">
-                        <Clock className="w-3 h-3 text-blue-600" />
-                        Analyzing
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-300">
-                        Draft
-                      </span>
-                    )}
+                    {renderStatusBadge(idea.status)}
                   </div>
 
                   <div>
@@ -227,20 +285,20 @@ export default function MyIdeasPage() {
                     </p>
                   </div>
 
-                  {/* Score Pills when available */}
+                  {/* Grounded Score Indicators */}
                   {(idea.feasibilityScore || idea.marketDemand || idea.opportunityScore) && (
                     <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border-default text-center">
                       <div className="p-1.5 rounded bg-canvas-bg">
                         <div className="text-[9px] text-text-muted uppercase font-semibold">Feas</div>
-                        <div className="text-xs font-bold text-teal-600">{Math.round(idea.feasibilityScore || 80)}%</div>
+                        <div className="text-xs font-bold text-teal-600">{Math.round(idea.feasibilityScore || 0)}%</div>
                       </div>
                       <div className="p-1.5 rounded bg-canvas-bg">
                         <div className="text-[9px] text-text-muted uppercase font-semibold">Demand</div>
-                        <div className="text-xs font-bold text-emerald-600">{Math.round(idea.marketDemand || 78)}%</div>
+                        <div className="text-xs font-bold text-emerald-600">{Math.round(idea.marketDemand || 0)}%</div>
                       </div>
                       <div className="p-1.5 rounded bg-canvas-bg">
                         <div className="text-[9px] text-text-muted uppercase font-semibold">Opp</div>
-                        <div className="text-xs font-bold text-primary">{Math.round(idea.opportunityScore || 79)}</div>
+                        <div className="text-xs font-bold text-primary">{Math.round(idea.opportunityScore || 0)}</div>
                       </div>
                     </div>
                   )}
@@ -287,9 +345,7 @@ export default function MyIdeasPage() {
                   </td>
                   <td className="py-4 px-5 text-text-secondary">{idea.industry || "General"}</td>
                   <td className="py-4 px-5">
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800/40">
-                      {idea.status}
-                    </span>
+                    {renderStatusBadge(idea.status)}
                   </td>
                   <td className="py-4 px-5 font-semibold text-teal-600">
                     {idea.feasibilityScore ? `${Math.round(idea.feasibilityScore)}%` : "—"}
