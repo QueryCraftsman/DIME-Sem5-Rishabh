@@ -32,6 +32,12 @@ const nextConfig: NextConfig = {
     if (dev && !isServer) {
       config.devtool = "cheap-module-source-map";
     }
+    config.resolve = config.resolve || {};
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      "webworker-threads": false,
+      lapack: false,
+    };
     return config;
   },
   async headers() {
