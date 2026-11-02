@@ -38,9 +38,12 @@ class Settings(BaseSettings):
     @property
     def database_url(self) -> str:
         """The async URL for SQLAlchemy."""
-        if self.database_url_raw.startswith("postgresql://"):
-            return self.database_url_raw.replace("postgresql://", "postgresql+asyncpg://", 1)
-        return self.database_url_raw
+        url = self.database_url_raw
+        if url.startswith("postgres://"):
+            url = url.replace("postgres://", "postgresql+asyncpg://", 1)
+        elif url.startswith("postgresql://"):
+            url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return url
 
     # ── Redis ─────────────────────────────────────────────────
     redis_url: str = "redis://localhost:6381/0"
